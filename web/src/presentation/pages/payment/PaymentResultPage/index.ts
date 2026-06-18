@@ -1,0 +1,2 @@
+export { PaymentResultPage } from './PaymentResultPage';
+

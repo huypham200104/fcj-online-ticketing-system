@@ -1,0 +1,118 @@
+.main-layout {
+  min-height: 100vh;
+  background:
+    linear-gradient(180deg, var(--color-primary-50) 0, var(--color-bg-base) 360px),
+    var(--color-bg-base);
+  color: var(--color-text-primary);
+}
+
+.main-layout__header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  min-height: 76px;
+  padding: 16px clamp(20px, 5vw, 72px);
+  background: var(--color-bg-base);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.main-layout__brand,
+.main-layout__nav,
+.main-layout__account {
+  display: flex;
+  align-items: center;
+}
+
+.main-layout__brand {
+  gap: 12px;
+  color: var(--color-primary-700);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.main-layout__logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.main-layout__nav {
+  gap: 6px;
+  padding: 5px;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-xs);
+}
+
+.main-layout__nav a {
+  min-height: 38px;
+  padding: 8px 14px;
+  border-radius: var(--radius-xs);
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  font-weight: 700;
+  transition: var(--transition-fast);
+}
+
+.main-layout__nav a:hover,
+.main-layout__nav a.active {
+  background: var(--color-primary-50);
+  color: var(--color-primary-700);
+}
+
+.main-layout__account {
+  min-height: 42px;
+  padding: 8px 16px;
+  border: 1px solid var(--color-primary-200);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-surface);
+  color: var(--color-primary-700);
+  font-size: 14px;
+  font-weight: 800;
+  box-shadow: var(--shadow-sm);
+}
+
+.main-layout__content {
+  width: min(1180px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 36px 0 64px;
+}
+
+@media (max-width: 860px) {
+  .main-layout__header {
+    flex-wrap: wrap;
+  }
+
+  .main-layout__nav {
+    order: 3;
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 560px) {
+  .main-layout__header {
+    padding: 14px;
+  }
+
+  .main-layout__content {
+    width: min(100% - 28px, 1180px);
+    padding-top: 22px;
+  }
+
+  .main-layout__brand span {
+    font-size: 18px;
+  }
+
+  .main-layout__nav a {
+    padding: 8px 9px;
+    font-size: 13px;
+  }
+}
+

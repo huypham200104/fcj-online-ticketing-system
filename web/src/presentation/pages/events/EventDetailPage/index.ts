@@ -1,0 +1,2 @@
+export { EventDetailPage } from './EventDetailPage';
+

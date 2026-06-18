@@ -1,0 +1,2 @@
+export { QRCodeView } from './QRCodeView';
+

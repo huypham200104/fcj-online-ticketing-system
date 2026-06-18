@@ -1,0 +1,49 @@
+.page-state {
+  display: flex;
+  min-height: 360px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-surface);
+  box-shadow: var(--shadow-sm);
+  text-align: center;
+}
+
+.page-state h1 {
+  font-size: 24px;
+  letter-spacing: 0;
+}
+
+.page-state p {
+  max-width: 460px;
+  color: var(--color-text-secondary);
+}
+
+.page-state__spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--color-primary-100);
+  border-top-color: var(--color-primary-500);
+  border-radius: var(--radius-full);
+  animation: page-state-spin 0.75s linear infinite;
+}
+
+.page-state--error {
+  border-color: var(--color-error);
+  background: var(--color-error-light);
+}
+
+.page-state__action {
+  margin-top: 8px;
+}
+
+@keyframes page-state-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+

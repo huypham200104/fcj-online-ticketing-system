@@ -1,0 +1,140 @@
+/* ─── Button Component ────────────────────────────────────────────────────────
+   Uses CSS variables from src/styles/theme.css
+   ─────────────────────────────────────────────────────────────────────────── */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: inherit;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  border: none;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: var(--transition-spring);
+  white-space: nowrap;
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+  outline: none;
+  user-select: none;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+/* ─── Sizes ─────────────────────────────────────────── */
+.btn--sm  { height: 36px; padding: 0 16px; font-size: 13px; }
+.btn--md  { height: 46px; padding: 0 24px; font-size: 15px; }
+.btn--lg  { height: 54px; padding: 0 32px; font-size: 16px; }
+
+/* ─── Full width ────────────────────────────────────── */
+.btn--full { width: 100%; }
+
+/* ─── Variants ──────────────────────────────────────── */
+
+/* Primary — gradient violet */
+.btn--primary {
+  background: var(--gradient-primary);
+  color: #ffffff;
+  box-shadow: var(--shadow-md);
+}
+.btn--primary:hover:not(:disabled) {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+.btn--primary:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Secondary — surface with border */
+.btn--secondary {
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+  border: 1.5px solid var(--color-border);
+  box-shadow: var(--shadow-xs);
+}
+.btn--secondary:hover:not(:disabled) {
+  border-color: var(--color-primary-500);
+  color: var(--color-primary-500);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+
+/* Outline */
+.btn--outline {
+  background: transparent;
+  color: var(--color-primary-500);
+  border: 1.5px solid var(--color-primary-500);
+}
+.btn--outline:hover:not(:disabled) {
+  background: var(--color-primary-50);
+  transform: translateY(-1px);
+}
+
+/* Ghost */
+.btn--ghost {
+  background: transparent;
+  color: var(--color-text-secondary);
+  border: none;
+}
+.btn--ghost:hover:not(:disabled) {
+  background: var(--color-bg-subtle);
+  color: var(--color-text-primary);
+}
+
+/* Google */
+.btn--google {
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+  border: 1.5px solid var(--color-border);
+  box-shadow: var(--shadow-xs);
+}
+.btn--google:hover:not(:disabled) {
+  box-shadow: var(--shadow-sm);
+  border-color: var(--color-gray-300);
+  transform: translateY(-1px);
+}
+
+/* ─── Disabled ──────────────────────────────────────── */
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* ─── Loading ───────────────────────────────────────── */
+.btn--loading { cursor: wait; }
+
+.btn__spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: btn-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+.btn--google .btn__spinner {
+  border-color: var(--color-gray-200);
+  border-top-color: var(--color-primary-500);
+}
+
+@keyframes btn-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ─── Icon ──────────────────────────────────────────── */
+.btn__icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}

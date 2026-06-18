@@ -4,173 +4,58 @@
 
 Các lựa chọn phù hợp:
 
-- **React.js hoặc Next.js:** phù hợp để xây dựng giao diện web hiện đại, dễ chia component và có hệ sinh thái mạnh.
-- **TypeScript:** giúp code rõ ràng hơn, giảm lỗi khi làm việc với dữ liệu API.
-- **Tailwind CSS:** xây dựng UI nhanh, dễ responsive và phù hợp cho dashboard/admin.
-- **React Query hoặc SWR:** quản lý server state, cache dữ liệu sự kiện và đơn hàng.
-- **Zustand hoặc Redux Toolkit:** quản lý state client như giỏ vé, thông tin phiên đặt vé và trạng thái đăng nhập.
-
-Đề xuất:
-
-- Nếu muốn làm nhanh và dễ deploy: dùng **React.js + Vite**.
-- Nếu muốn dự án chuyên nghiệp hơn, hỗ trợ SEO cho trang sự kiện: dùng **Next.js + TypeScript**.
+- **React.js hoặc Next.js:** Rất phù hợp để xây dựng giao diện hiển thị sơ đồ ghế ngồi rạp phim phức tạp.
+- **TypeScript:** Giúp giảm thiểu lỗi khi làm việc với object data lớn như cấu trúc Rạp -> Phòng chiếu -> Sơ đồ ghế.
+- **Tailwind CSS:** Dễ thiết kế các thành phần UI như màn hình chọn ghế, chọn bắp nước, hiển thị poster phim.
+- **React Query hoặc SWR:** Quản lý server state, đặc biệt hữu ích khi cần poll (gọi định kỳ) API để cập nhật trạng thái ghế trống/ghế đã bán trên sơ đồ realtime.
+- **Zustand hoặc Redux Toolkit:** Quản lý giỏ hàng (ghế đang chọn, bắp nước đang chọn, đếm ngược thời gian).
 
 ## 2. Mobile app
 
-Các lựa chọn phù hợp:
-
-- **Flutter:** xây dựng app Android/iOS từ một codebase, UI ổn định và phù hợp cho app check-in.
-- **React Native:** phù hợp nếu team đã quen React.
-
-Đề xuất:
-
-- Nếu chỉ cần web responsive trước, có thể chưa làm mobile app.
-- Nếu cần app check-in riêng cho nhân viên, nên dùng **Flutter** hoặc một web app mobile-first có camera scanner.
+- **Flutter hoặc React Native:** Rất phù hợp để làm app hiển thị vé QR Code cho người dùng, và app quét QR Code check-in vé cho nhân viên tại cửa rạp.
 
 ## 3. Backend
 
-Các lựa chọn phù hợp:
-
-- **Node.js + NestJS:** kiến trúc rõ ràng, phù hợp API lớn, hỗ trợ TypeScript tốt.
-- **Node.js + Express:** dễ học, dễ làm MVP, nhưng cần tự tổ chức structure kỹ.
-- **Java Spring Boot:** mạnh cho hệ thống enterprise, transaction tốt, nhưng triển khai nặng hơn.
-- **Python FastAPI:** nhanh, dễ viết API, phù hợp MVP và service nhỏ.
-
-Đề xuất:
-
-- Với dự án portfolio/cloud: dùng **Node.js + NestJS + TypeScript** để có structure rõ ràng.
-- Với serverless AWS: có thể dùng **AWS Lambda + Node.js/TypeScript**.
+- **Node.js + NestJS:** Kiến trúc module rõ ràng, rất dễ chia các domain như Movies, Cinemas, Showtimes, Bookings, Payments.
+- **AWS Lambda + Serverless Framework:** Nếu muốn tiết kiệm chi phí và xây dựng theo chuẩn Cloud-native serverless.
 
 ## 4. Database chính
 
-Các lựa chọn phù hợp:
+- **MySQL / PostgreSQL:** Hệ thống bán vé rạp phim đòi hỏi cấu trúc dữ liệu quan hệ chặt chẽ (Phim có nhiều Suất Chiếu, Suất Chiếu diễn ra tại một Phòng Chiếu thuộc về một Rạp, Đơn Hàng chứa nhiều Ghế thuộc về một Suất Chiếu). PostgreSQL là lựa chọn tuyệt vời nhờ hỗ trợ JSON và constraint tốt.
+- **Amazon RDS hoặc Aurora PostgreSQL/MySQL** cho môi trường Production.
 
-- **Amazon RDS MySQL:** dễ dùng, phù hợp dữ liệu quan hệ như user, event, ticket, order và payment.
-- **Amazon Aurora MySQL:** hiệu năng và khả năng mở rộng tốt hơn RDS MySQL, phù hợp nếu muốn mô phỏng hệ thống production.
-- **PostgreSQL:** mạnh về dữ liệu quan hệ, constraint và query phức tạp.
+## 5. Cache và kiểm soát ghế ngồi (Redis)
 
-Đề xuất:
-
-- Dùng **MySQL hoặc PostgreSQL** ở môi trường local.
-- Dùng **Amazon RDS MySQL hoặc Aurora MySQL** khi deploy lên AWS.
-
-## 5. Cache và kiểm soát vé
-
-Công nghệ đề xuất:
-
-- **Redis:** lưu số lượng vé còn lại, giữ vé tạm và xử lý thao tác atomic để chống oversell.
-- **Amazon ElastiCache Redis:** phiên bản Redis managed trên AWS.
-
-Redis nên dùng cho:
-
-- Kiểm tra số vé còn lại.
-- Trừ vé tạm thời khi người dùng tạo booking session.
-- Hoàn vé nếu thanh toán thất bại hoặc session hết hạn.
-- Giảm tải truy vấn vào database.
+- Hệ thống **BẮT BUỘC** phải có Redis để giải quyết bài toán cốt lõi: Lock ghế tạm thời.
+- Redis giúp kiểm tra và cập nhật trạng thái ghế (Trống -> Đang giữ) một cách atomic bằng Lua Script, tốc độ chỉ vài mili-giây, ngăn chặn hoàn toàn việc 2 người mua trùng 1 ghế.
+- **Amazon ElastiCache Redis** khi triển khai lên AWS.
 
 ## 6. Queue và xử lý bất đồng bộ
 
-Công nghệ đề xuất:
+- **Amazon SQS / RabbitMQ:** Hàng đợi xử lý đơn hàng sau khi khách thanh toán thành công để giảm tải cho Database chính.
+- Việc ghi dữ liệu đơn hàng, tạo vé, trừ kho bắp nước sẽ do worker đọc từ SQS xử lý.
 
-- **Amazon SQS:** hàng đợi xử lý đơn hàng sau khi thanh toán thành công.
-- **AWS Lambda Worker:** đọc message từ SQS và ghi order/ticket vào database.
-- **Dead-Letter Queue:** lưu message lỗi sau nhiều lần retry.
+## 7. Lưu phiên giữ ghế tạm thời
 
-Queue nên dùng cho:
-
-- Xử lý đơn hàng.
-- Tạo vé và QR Code.
-- Gửi email xác nhận.
-- Retry khi database hoặc service phụ bị lỗi tạm thời.
-
-## 7. Lưu phiên đặt vé tạm thời
-
-Công nghệ đề xuất:
-
-- **Amazon DynamoDB:** lưu booking session tạm thời.
-- **TTL của DynamoDB:** tự động xóa session hết hạn.
-
-DynamoDB phù hợp vì:
-
-- Tốc độ cao.
-- Không cần quản lý server.
-- Dễ lưu dữ liệu tạm theo key-value.
-- Có cơ chế TTL cho phiên giữ vé.
+- Khi khách chọn ghế, khách có 10 phút để thanh toán.
+- Có thể dùng **Redis TTL** hoặc **Amazon DynamoDB TTL** để lưu session này. Hết 10 phút, dữ liệu tự xóa, hệ thống sẽ kích hoạt trigger nhả ghế về lại trạng thái trống.
 
 ## 8. Thanh toán
 
-Các lựa chọn phù hợp:
+- Sử dụng Mock Payment cho MVP.
+- Sau đó tích hợp **Stripe**, **VNPay**, hoặc **MoMo** để mô phỏng chính xác luồng redirect thanh toán và xử lý webhook.
 
-- **Stripe:** phổ biến, tài liệu tốt, dễ tích hợp môi trường test.
-- **PayPal:** phù hợp nếu cần thanh toán quốc tế.
-- **VNPay, MoMo, ZaloPay:** phù hợp thị trường Việt Nam.
-- **Mock payment:** phù hợp cho giai đoạn demo hoặc portfolio.
+## 9. QR Code và Check-in vé tại rạp
 
-Đề xuất:
+- Sử dụng thư viện tạo QR Code từ một chuỗi JWT (JSON Web Token) chứa thông tin vé.
+- Thiết bị của nhân viên soát vé sẽ quét QR, gửi token lên backend để giải mã, verify chữ ký và cập nhật trạng thái vé thành `Checked-in`.
 
-- Giai đoạn MVP: dùng **mock payment** để hoàn thiện flow.
-- Giai đoạn nâng cấp: tích hợp **Stripe test mode** hoặc **VNPay sandbox**.
+## 10. Stack đề xuất cuối cùng cho ứng dụng Đặt Vé Xem Phim
 
-## 9. QR Code và check-in
-
-Công nghệ đề xuất:
-
-- **QRCode library:** tạo mã QR từ ticket token.
-- **JWT hoặc signed token:** tránh QR bị giả mạo.
-- **Camera scanner library:** quét QR trên web/mobile.
-
-QR Code nên chứa:
-
-- Ticket ID.
-- Event ID.
-- Mã xác thực hoặc chữ ký số.
-- Thời gian tạo hoặc metadata cần thiết.
-
-Không nên đưa trực tiếp thông tin nhạy cảm vào QR Code.
-
-## 10. Cloud và hạ tầng AWS
-
-Dịch vụ AWS đề xuất:
-
-- **Amazon S3:** lưu frontend, ảnh sự kiện và QR Code.
-- **Amazon CloudFront:** CDN phân phối frontend và tài nguyên tĩnh.
-- **Amazon API Gateway:** cổng API cho frontend.
-- **AWS Lambda:** xử lý logic backend theo hướng serverless.
-- **Amazon RDS/Aurora:** lưu dữ liệu chính.
-- **Amazon ElastiCache Redis:** chống oversell và cache.
-- **Amazon SQS:** hàng đợi xử lý đơn hàng.
-- **Amazon DynamoDB:** lưu booking session tạm.
-- **Amazon SES:** gửi email vé.
-- **Amazon SNS:** gửi thông báo hoặc cảnh báo.
-- **Amazon CloudWatch:** logging, metrics và alarms.
-- **AWS Global Accelerator:** tối ưu truy cập và hỗ trợ multi-region failover.
-
-## 11. DevOps và công cụ hỗ trợ
-
-Công nghệ đề xuất:
-
-- **Docker:** đóng gói backend và database local.
-- **Terraform hoặc AWS CDK:** quản lý hạ tầng bằng code.
-- **GitHub Actions:** CI/CD tự động test và deploy.
-- **Postman hoặc Bruno:** test API.
-- **k6 hoặc Artillery:** load test API đặt vé.
-- **ESLint + Prettier:** chuẩn hóa code.
-- **Jest hoặc Vitest:** unit test.
-- **Playwright hoặc Cypress:** end-to-end test.
-
-## 12. Stack đề xuất cuối cùng
-
-Stack cân bằng giữa học tập, demo và tính thực tế:
-
-- **Frontend:** Next.js, TypeScript, Tailwind CSS.
-- **Backend:** NestJS hoặc AWS Lambda Node.js/TypeScript.
-- **Database:** MySQL/PostgreSQL local, Amazon RDS/Aurora khi deploy.
-- **Cache:** Redis, Amazon ElastiCache Redis.
-- **Queue:** Amazon SQS.
-- **Temporary session:** Amazon DynamoDB.
-- **Storage:** Amazon S3.
-- **CDN:** Amazon CloudFront.
-- **Auth:** Amazon Cognito hoặc JWT custom.
-- **Monitoring:** Amazon CloudWatch.
-- **Infrastructure as Code:** Terraform hoặc AWS CDK.
-
+- **Frontend:** Next.js, TypeScript, Tailwind CSS, React Query (để hiển thị sơ đồ ghế realtime).
+- **Backend:** NestJS (TypeScript).
+- **Database:** PostgreSQL (Lưu Phim, Rạp, Phòng Chiếu, Suất Chiếu, Vé).
+- **Cache & Lock ghế:** Redis (Lua Script).
+- **Queue:** SQS hoặc BullMQ (xử lý đơn hàng).
+- **Storage:** Amazon S3 (Lưu poster phim, QR code).
+- **Monitoring:** CloudWatch / Datadog.

@@ -1,0 +1,122 @@
+/* ─── Input Field Component ───────────────────────────────────────────────────
+   Uses CSS variables from src/styles/theme.css
+   ─────────────────────────────────────────────────────────────────────────── */
+
+.input-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+/* ─── Label ──────────────────────────────────────────────── */
+.input-field__label {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  letter-spacing: 0.01em;
+}
+
+/* ─── Wrapper (input + icons) ────────────────────────────── */
+.input-field__wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* ─── Native input ───────────────────────────────────────── */
+.input-field__input {
+  width: 100%;
+  font-family: inherit;
+  font-size: 15px;
+  color: var(--color-text-primary);
+  background: var(--color-bg-subtle);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  transition: var(--transition-base);
+  outline: none;
+  padding: 0 14px;
+}
+
+/* Sizes */
+.input-field--sm .input-field__input { height: 38px; font-size: 13px; }
+.input-field--md .input-field__input { height: 46px; }
+.input-field--lg .input-field__input { height: 54px; font-size: 16px; }
+
+/* With left icon */
+.input-field__input--has-left  { padding-left: 44px; }
+/* With right icon / toggle */
+.input-field__input--has-right { padding-right: 44px; }
+
+/* Focus */
+.input-field__input:focus {
+  border-color: var(--color-primary-500);
+  background: var(--color-bg-surface);
+  box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.12);
+}
+
+/* Error */
+.input-field--error .input-field__input {
+  border-color: var(--color-error);
+  background: var(--color-error-light);
+}
+.input-field--error .input-field__input:focus {
+  box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.15);
+}
+
+/* Placeholder */
+.input-field__input::placeholder {
+  color: var(--color-text-disabled);
+}
+
+/* Disabled */
+.input-field__input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ─── Left icon ──────────────────────────────────────────── */
+.input-field__left-icon {
+  position: absolute;
+  left: 14px;
+  display: flex;
+  align-items: center;
+  color: var(--color-text-secondary);
+  pointer-events: none;
+  z-index: 1;
+}
+.input-field__left-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ─── Password toggle ────────────────────────────────────── */
+.input-field__toggle {
+  position: absolute;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-sm);
+  transition: var(--transition-fast);
+  padding: 0;
+}
+.input-field__toggle:hover { color: var(--color-primary-500); }
+.input-field__toggle svg { width: 18px; height: 18px; }
+
+/* ─── Helper / Error message ─────────────────────────────── */
+.input-field__message {
+  font-size: 12.5px;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+.input-field__message--error {
+  color: var(--color-error);
+  font-weight: 500;
+}
