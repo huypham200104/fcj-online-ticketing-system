@@ -1,0 +1,173 @@
+# ============================================================
+# FCJ Online Ticketing System - .gitignore
+# Stack: React + Vite + TypeScript (web), NestJS (app/backend),
+#        Terraform / AWS CDK, Docker, GitHub Actions
+# ============================================================
+
+# ─────────────────────────────────────────
+# OS & Editor
+# ─────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+.vscode/settings.json
+.vscode/launch.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ─────────────────────────────────────────
+# Node.js / npm / yarn / pnpm
+# ─────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.npm
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+
+# ─────────────────────────────────────────
+# React + Vite (web/)
+# ─────────────────────────────────────────
+web/dist/
+web/.vite/
+web/build/
+web/.env
+web/.env.local
+web/.env.*.local
+web/coverage/
+web/storybook-static/
+
+# ─────────────────────────────────────────
+# NestJS / Backend (app/)
+# ─────────────────────────────────────────
+app/dist/
+app/build/
+app/.env
+app/.env.*
+app/coverage/
+app/logs/
+app/*.log
+
+# ─────────────────────────────────────────
+# Environment / Secrets (root & all)
+# ─────────────────────────────────────────
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+.env.staging
+.env.*
+!.env.example
+!.env.*.example
+
+# ─────────────────────────────────────────
+# TypeScript
+# ─────────────────────────────────────────
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# ─────────────────────────────────────────
+# Test & Coverage
+# ─────────────────────────────────────────
+coverage/
+.nyc_output/
+*.lcov
+playwright-report/
+test-results/
+cypress/screenshots/
+cypress/videos/
+
+# ─────────────────────────────────────────
+# Docker
+# ─────────────────────────────────────────
+.docker/
+docker-compose.override.yml
+*.pid
+
+# ─────────────────────────────────────────
+# Terraform (IaC)
+# ─────────────────────────────────────────
+**/.terraform/
+**/.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+*.tfvars
+!*.tfvars.example
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+crash.log
+crash.*.log
+
+# ─────────────────────────────────────────
+# AWS CDK
+# ─────────────────────────────────────────
+cdk.out/
+cdk.context.json
+
+# ─────────────────────────────────────────
+# AWS Credentials / Config (never commit!)
+# ─────────────────────────────────────────
+.aws/
+aws-exports.js
+amplify/
+**/aws-credentials*
+**/credentials
+
+# ─────────────────────────────────────────
+# Serverless Framework
+# ─────────────────────────────────────────
+.serverless/
+
+# ─────────────────────────────────────────
+# Logs
+# ─────────────────────────────────────────
+logs/
+*.log
+*.log.*
+
+# ─────────────────────────────────────────
+# Build artifacts
+# ─────────────────────────────────────────
+dist/
+build/
+out/
+.output/
+.cache/
+.parcel-cache/
+
+# ─────────────────────────────────────────
+# Package lock files (keep one, ignore rest)
+# Uncomment based on your package manager
+# ─────────────────────────────────────────
+# yarn.lock
+# pnpm-lock.yaml
+
+# ─────────────────────────────────────────
+# Misc
+# ─────────────────────────────────────────
+*.pem
+*.key
+*.cert
+*.p12
+*.pfx
+*.jks
+tmp/
+temp/
+.tmp/
