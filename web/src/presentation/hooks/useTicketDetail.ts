@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { Ticket } from '@/domain/entities/Ticket';
 import { GetTicketDetailUseCase } from '@/application/use-cases/tickets/GetTicketDetailUseCase';
-import { MockTicketService } from '@/infrastructure/tickets/MockTicketService';
+import { ApiTicketService } from '@/infrastructure/tickets/ApiTicketService';
 
-const getTicketDetailUseCase = new GetTicketDetailUseCase(new MockTicketService());
+const getTicketDetailUseCase = new GetTicketDetailUseCase(new ApiTicketService());
 
 export function useTicketDetail(ticketId?: string) {
   const [ticket, setTicket] = useState<Ticket | null>(null);

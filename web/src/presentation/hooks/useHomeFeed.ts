@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { HomeFeed } from '@/domain/entities/Event';
 import { GetHomeFeedUseCase } from '@/application/use-cases/events/GetHomeFeedUseCase';
-import { MockEventService } from '@/infrastructure/events/MockEventService';
+import { ApiEventService } from '@/infrastructure/events/ApiEventService';
 
-const getHomeFeedUseCase = new GetHomeFeedUseCase(new MockEventService());
+const getHomeFeedUseCase = new GetHomeFeedUseCase(new ApiEventService());
 
 export function useHomeFeed() {
   const [data, setData] = useState<HomeFeed | null>(null);
@@ -17,7 +17,7 @@ export function useHomeFeed() {
     try {
       setData(await getHomeFeedUseCase.execute());
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Không thể tải danh sách sự kiện');
+      setError(err instanceof Error ? err.message : 'Không thể tải danh sách phim và concert');
     } finally {
       setLoading(false);
     }

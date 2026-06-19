@@ -46,16 +46,27 @@
 }
 
 .my-ticket-card {
-  display: flex;
+  display: grid;
   min-height: 320px;
-  flex-direction: column;
-  justify-content: space-between;
   gap: 18px;
   padding: 20px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   background: var(--color-bg-surface);
   box-shadow: var(--shadow-sm);
+}
+
+.my-ticket-card__qr {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: start;
+  width: 128px;
+  height: 128px;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-surface);
 }
 
 .my-ticket-card__body {
@@ -117,4 +128,3 @@
     grid-template-columns: 1fr;
   }
 }
-

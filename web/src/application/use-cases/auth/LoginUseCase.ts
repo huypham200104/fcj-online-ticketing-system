@@ -15,15 +15,16 @@ export class LoginUseCase {
 
   async execute(dto: LoginDTO): Promise<AuthResponseDTO> {
     if (!dto.email.trim()) {
-      throw new AuthError('Email is required', 'INVALID_CREDENTIALS');
+      throw new AuthError('Username hoặc email là bắt buộc', 'INVALID_CREDENTIALS');
     }
     if (!dto.password.trim()) {
-      throw new AuthError('Password is required', 'INVALID_CREDENTIALS');
+      throw new AuthError('Password là bắt buộc', 'INVALID_CREDENTIALS');
     }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(dto.email)) {
-      throw new AuthError('Invalid email format', 'INVALID_CREDENTIALS');
+
+    if (/\s/.test(dto.email.trim())) {
+      throw new AuthError('Username hoặc email không được chứa khoảng trắng', 'INVALID_CREDENTIALS');
     }
+
     return this.authService.login(dto);
   }
 }

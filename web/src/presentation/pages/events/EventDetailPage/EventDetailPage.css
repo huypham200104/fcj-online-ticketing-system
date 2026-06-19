@@ -4,6 +4,23 @@
   gap: 28px;
 }
 
+.event-detail__notification {
+  padding: 14px 16px;
+  border: 1px solid var(--color-success-700);
+  border-radius: var(--radius-sm);
+  background: var(--color-success-light);
+  color: var(--color-success-700);
+  font-size: 14px;
+  font-weight: 800;
+  box-shadow: var(--shadow-sm);
+}
+
+.event-detail__notification--error {
+  border-color: var(--color-error);
+  background: var(--color-error-light);
+  color: var(--color-error-dark);
+}
+
 .event-detail__hero,
 .event-detail__content {
   display: grid;
@@ -26,12 +43,36 @@
 }
 
 .event-detail__poster {
+  position: relative;
   min-height: 360px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  overflow: hidden;
   padding: 28px;
+  background: var(--color-bg-subtle);
   color: var(--color-text-inverse);
+}
+
+.event-detail__poster--image {
+  padding: 0;
+}
+
+.event-detail__poster--image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 360px;
+  object-fit: cover;
+  object-position: center;
+}
+
+.event-detail__poster--image::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgb(0 0 0 / 0.12), rgb(0 0 0 / 0.5));
+  pointer-events: none;
 }
 
 .event-detail__poster--primary {
@@ -54,7 +95,20 @@
   text-transform: uppercase;
 }
 
+.event-detail__poster span {
+  position: relative;
+  z-index: 1;
+  width: fit-content;
+  padding: 7px 10px;
+  border: 1px solid rgb(255 255 255 / 0.3);
+  border-radius: var(--radius-xs);
+  background: rgb(0 0 0 / 0.45);
+  color: var(--color-text-inverse);
+}
+
 .event-detail__poster strong {
+  position: relative;
+  z-index: 1;
   font-size: clamp(48px, 8vw, 78px);
   line-height: 0.95;
   letter-spacing: 0;
@@ -167,6 +221,115 @@
   margin-top: 18px;
 }
 
+.event-detail__booking-copy {
+  margin-top: 16px;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.event-detail__booking-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.event-detail__booking-stats div {
+  display: grid;
+  gap: 2px;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-subtle);
+}
+
+.event-detail__booking-stats strong {
+  color: var(--color-primary-700);
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.event-detail__booking-stats span {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.event-detail__cinema-list,
+.event-detail__showtime-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.cinema-option,
+.showtime-option {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-base);
+  color: var(--color-text-primary);
+  font: inherit;
+  text-align: left;
+  transition: var(--transition-fast);
+}
+
+.cinema-option {
+  cursor: pointer;
+}
+
+.cinema-option:hover,
+.cinema-option--active,
+.showtime-option:hover {
+  border-color: var(--color-primary-500);
+  background: var(--color-primary-50);
+}
+
+.cinema-option strong,
+.showtime-option strong {
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.cinema-option span,
+.showtime-option span {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.cinema-option small,
+.showtime-option small {
+  color: var(--color-primary-700);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.event-detail__showtime-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.showtime-option {
+  min-height: 92px;
+  justify-content: center;
+}
+
+.showtime-option--disabled {
+  background: var(--color-bg-subtle);
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+}
+
+.showtime-option--disabled span,
+.showtime-option--disabled small {
+  color: var(--color-text-disabled);
+}
+
 .ticket-type-card {
   display: grid;
   gap: 18px;
@@ -203,8 +366,12 @@
 
 .ticket-type-card__footer a,
 .ticket-type-card__footer button,
+.event-detail__booking-action,
 .event-detail__state-actions a,
 .event-detail__state-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: 40px;
   padding: 8px 14px;
   border: 0;
@@ -216,7 +383,13 @@
   font-weight: 900;
 }
 
-.ticket-type-card__footer button:disabled {
+.event-detail__booking-action {
+  width: 100%;
+  margin-top: 18px;
+}
+
+.ticket-type-card__footer button:disabled,
+.event-detail__booking-action:disabled {
   background: var(--color-bg-subtle);
   color: var(--color-text-disabled);
   cursor: not-allowed;
@@ -245,4 +418,3 @@
     flex-direction: column;
   }
 }
-

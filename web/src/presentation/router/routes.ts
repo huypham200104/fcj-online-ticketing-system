@@ -3,6 +3,8 @@ export const ROUTES = {
   LOGIN: '/auth/login',
   REGISTER: '/auth/register',
   EVENTS: '/events',
+  MOVIES: '/events/movies',
+  CONCERTS: '/events/concerts',
   EVENT_DETAIL: '/events/:id',
   CHECKOUT: '/checkout',
   PAYMENT_SUCCESS: '/payment/success',
@@ -20,10 +22,21 @@ export const ROUTES = {
 export type RouteValues = (typeof ROUTES)[keyof typeof ROUTES];
 
 export const routePaths = {
-  eventDetail: (eventId: string) => `/events/${eventId}`,
-  checkout: (eventId: string, ticketTypeId?: string) => {
+  eventDetail: (eventId: string, selection?: { cinemaId?: string }) => {
+    const params = new URLSearchParams();
+    if (selection?.cinemaId) params.set('cinemaId', selection.cinemaId);
+    const query = params.toString();
+    return query ? `/events/${eventId}?${query}` : `/events/${eventId}`;
+  },
+  checkout: (
+    eventId: string,
+    ticketTypeId?: string,
+    selection?: { cinemaId?: string; showtimeId?: string },
+  ) => {
     const params = new URLSearchParams({ eventId });
     if (ticketTypeId) params.set('ticketTypeId', ticketTypeId);
+    if (selection?.cinemaId) params.set('cinemaId', selection.cinemaId);
+    if (selection?.showtimeId) params.set('showtimeId', selection.showtimeId);
     return `${ROUTES.CHECKOUT}?${params.toString()}`;
   },
   paymentSuccess: (sessionId: string, ticketId?: string) => {

@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { TicketEvent } from '@/domain/entities/Event';
 import { GetEventDetailUseCase } from '@/application/use-cases/events/GetEventDetailUseCase';
-import { MockEventService } from '@/infrastructure/events/MockEventService';
+import { ApiEventService } from '@/infrastructure/events/ApiEventService';
 
-const getEventDetailUseCase = new GetEventDetailUseCase(new MockEventService());
+const getEventDetailUseCase = new GetEventDetailUseCase(new ApiEventService());
 
 export function useEventDetail(eventId?: string) {
   const [event, setEvent] = useState<TicketEvent | null>(null);
@@ -14,7 +14,7 @@ export function useEventDetail(eventId?: string) {
     if (!eventId) {
       setEvent(null);
       setLoading(false);
-      setError('Thiếu mã sự kiện');
+      setError('Thiếu mã phim hoặc concert');
       return;
     }
 
@@ -24,11 +24,11 @@ export function useEventDetail(eventId?: string) {
     try {
       const result = await getEventDetailUseCase.execute(eventId);
       if (!result) {
-        setError('Không tìm thấy sự kiện');
+        setError('Không tìm thấy phim hoặc concert');
       }
       setEvent(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Không thể tải chi tiết sự kiện');
+      setError(err instanceof Error ? err.message : 'Không thể tải chi tiết vé');
     } finally {
       setLoading(false);
     }

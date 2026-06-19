@@ -52,7 +52,7 @@
 .input-field__input:focus {
   border-color: var(--color-primary-500);
   background: var(--color-bg-surface);
-  box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.12);
+  box-shadow: 0 0 0 3px var(--color-primary-50);
 }
 
 /* Error */
@@ -61,7 +61,7 @@
   background: var(--color-error-light);
 }
 .input-field--error .input-field__input:focus {
-  box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.15);
+  box-shadow: 0 0 0 3px var(--color-error-light);
 }
 
 /* Placeholder */

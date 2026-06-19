@@ -1,13 +1,10 @@
 import { useState } from 'react';
-import { MockAuthService } from '@/infrastructure/auth/MockAuthService';
+import { ApiAuthService } from '@/infrastructure/auth/ApiAuthService';
 import { LoginUseCase } from '@/application/use-cases/auth/LoginUseCase';
 import { RegisterUseCase } from '@/application/use-cases/auth/RegisterUseCase';
 import type { LoginDTO, RegisterDTO, AuthResponseDTO } from '@/application/dtos/AuthDTO';
 
-// ─── Dependency wiring (simple DI without container) ──────────────────────────
-// Replace MockAuthService → CognitoAuthService when integrating AWS Cognito.
-// ──────────────────────────────────────────────────────────────────────────────
-const authService = new MockAuthService();
+const authService = new ApiAuthService();
 const loginUseCase = new LoginUseCase(authService);
 const registerUseCase = new RegisterUseCase(authService);
 
@@ -56,5 +53,17 @@ export function useAuth() {
     }
   };
 
-  return { login, register, loginWithGoogle, loading, error, clearError };
+  const logout = async (): Promise<void> => {
+    setLoading(true);
+    setError(null);
+    try {
+      await authService.logout();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Không thể đăng xuất');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { login, register, loginWithGoogle, logout, loading, error, clearError };
 }

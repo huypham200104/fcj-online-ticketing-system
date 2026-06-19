@@ -6,6 +6,14 @@ export interface BookingSession {
   eventTitle: string;
   ticketTypeId: string;
   ticketTypeName: string;
+  cinemaId?: string;
+  cinemaName?: string;
+  cinemaAddress?: string;
+  showtimeId?: string;
+  showtimeLabel?: string;
+  hallName?: string;
+  seatIds?: string[];
+  seatLabels?: string[];
   quantity: number;
   unitPrice: number;
   totalPrice: number;
@@ -14,4 +22,3 @@ export interface BookingSession {
   expiresAt: string;
   status: BookingSessionStatus;
 }
-

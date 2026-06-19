@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import { Badge } from '@/presentation/components/ui/Badge';
 import { MainLayout } from '@/presentation/components/layouts/MainLayout';
 import { PageState } from '@/presentation/components/shared/PageState';
@@ -33,14 +33,24 @@ function formatPrice(value: number): string {
   return value === 0 ? 'Miễn phí' : formatCurrency(value);
 }
 
+interface EventDetailRouteState {
+  notification?: {
+    tone: 'success' | 'error';
+    message: string;
+  };
+}
+
 export const EventDetailPage: React.FC = () => {
   const { id } = useParams();
+  const location = useLocation();
   const { event, loading, error, reload } = useEventDetail(id);
+  const routeState = location.state as EventDetailRouteState | null;
+  const notification = routeState?.notification;
 
   if (loading) {
     return (
       <MainLayout>
-        <PageState variant="loading" title="Đang tải chi tiết sự kiện" />
+        <PageState variant="loading" title="Đang tải chi tiết vé" />
       </MainLayout>
     );
   }
@@ -50,8 +60,8 @@ export const EventDetailPage: React.FC = () => {
       <MainLayout>
         <PageState
           variant="error"
-          title="Không tìm thấy sự kiện"
-          description={error ?? 'Sự kiện này không tồn tại hoặc đã ngừng mở bán.'}
+          title="Không tìm thấy phim hoặc concert"
+          description={error ?? 'Suất chiếu hoặc concert này không tồn tại hoặc đã ngừng mở bán.'}
           action={
             <div className="event-detail__state-actions">
               <button type="button" onClick={reload}>
@@ -65,12 +75,34 @@ export const EventDetailPage: React.FC = () => {
     );
   }
 
+  const movieSchedules = event.movieSchedules ?? [];
+  const isMovieWithShowtimes = event.category === 'Phim' && movieSchedules.length > 0;
+  const firstTicketType = event.ticketTypes[0];
+  const cinemaCount = movieSchedules.length;
+  const showtimeCount = movieSchedules.reduce((sum, schedule) => sum + schedule.showtimes.length, 0);
+  const displayVenue = event.venue;
+
   return (
     <MainLayout contentClassName="event-detail">
+      {notification ? (
+        <div className={`event-detail__notification event-detail__notification--${notification.tone}`} role="status">
+          {notification.message}
+        </div>
+      ) : null}
+
       <section className="event-detail__hero">
-        <div className={`event-detail__poster event-detail__poster--${event.visualTone}`}>
-          <span>{event.category}</span>
-          <strong>{event.dateLabel.split(',')[0]}</strong>
+        <div className={event.posterUrl ? 'event-detail__poster event-detail__poster--image' : `event-detail__poster event-detail__poster--${event.visualTone}`}>
+          {event.posterUrl ? (
+            <>
+              <img src={event.posterUrl} alt={event.title} />
+              <span>{event.category}</span>
+            </>
+          ) : (
+            <>
+              <span>{event.category}</span>
+              <strong>{event.dateLabel.split(',')[0]}</strong>
+            </>
+          )}
         </div>
 
         <div className="event-detail__intro">
@@ -85,7 +117,7 @@ export const EventDetailPage: React.FC = () => {
             </span>
             <span>
               <MapPinIcon />
-              {event.venue.name}
+              {displayVenue.name}
             </span>
           </div>
         </div>
@@ -94,16 +126,28 @@ export const EventDetailPage: React.FC = () => {
       <section className="event-detail__content">
         <div className="event-detail__main">
           <article className="event-detail__panel">
-            <h2>Thông tin sự kiện</h2>
+            <h2>{isMovieWithShowtimes ? 'Thông tin phim' : 'Thông tin lịch chiếu'}</h2>
             <dl>
               <div>
                 <dt>Đơn vị tổ chức</dt>
                 <dd>{event.organizer}</dd>
               </div>
+              {isMovieWithShowtimes ? (
+                <>
+                  <div>
+                    <dt>Thể loại</dt>
+                    <dd>{event.genre ?? 'Điện ảnh'}</dd>
+                  </div>
+                  <div>
+                    <dt>Thời lượng</dt>
+                    <dd>{event.duration ?? 'Đang cập nhật'}</dd>
+                  </div>
+                </>
+              ) : null}
               <div>
                 <dt>Địa điểm</dt>
                 <dd>
-                  {event.venue.address}, {event.venue.city}
+                  {displayVenue.address}, {displayVenue.city}
                 </dd>
               </div>
               <div>
@@ -114,47 +158,87 @@ export const EventDetailPage: React.FC = () => {
           </article>
         </div>
 
-        <aside className="event-detail__tickets">
-          <div className="event-detail__tickets-header">
-            <div>
-              <span>Đang mở bán</span>
-              <h2>Chọn loại vé</h2>
+        {isMovieWithShowtimes ? (
+          <aside className="event-detail__tickets">
+            <div className="event-detail__tickets-header">
+              <div>
+                <span>Bước tiếp theo</span>
+                <h2>Chọn rạp & suất chiếu</h2>
+              </div>
+              <TicketIcon />
             </div>
-            <TicketIcon />
-          </div>
 
-          <div className="event-detail__ticket-list">
-            {event.ticketTypes.map((ticketType) => {
-              const soldOut = ticketType.remainingStock === 0;
-              return (
-                <article className="ticket-type-card" key={ticketType.id}>
-                  <div>
-                    <div className="ticket-type-card__title">
-                      <h3>{ticketType.name}</h3>
-                      <Badge tone={soldOut ? 'error' : 'success'}>
-                        {soldOut ? 'Hết vé' : `${ticketType.remainingStock} vé`}
-                      </Badge>
+            <p className="event-detail__booking-copy">
+              Phần chọn rạp, giờ chiếu và ghế ngồi được tách sang màn đặt vé riêng để bạn thao tác rõ ràng hơn.
+            </p>
+
+            <div className="event-detail__booking-stats">
+              <div>
+                <strong>{cinemaCount}</strong>
+                <span>rạp</span>
+              </div>
+              <div>
+                <strong>{showtimeCount}</strong>
+                <span>suất chiếu</span>
+              </div>
+              <div>
+                <strong>Theo suất</strong>
+                <span>ghế trống</span>
+              </div>
+            </div>
+
+            {firstTicketType ? (
+              <Link className="event-detail__booking-action" to={routePaths.checkout(event.id, firstTicketType.id)}>
+                Chọn rạp & giờ chiếu
+              </Link>
+            ) : (
+              <button className="event-detail__booking-action" type="button" disabled>
+                Chưa có vé mở bán
+              </button>
+            )}
+          </aside>
+        ) : (
+          <aside className="event-detail__tickets">
+            <div className="event-detail__tickets-header">
+              <div>
+                <span>Đang mở bán</span>
+                <h2>Chọn loại vé</h2>
+              </div>
+              <TicketIcon />
+            </div>
+
+            <div className="event-detail__ticket-list">
+              {event.ticketTypes.map((ticketType) => {
+                const soldOut = ticketType.remainingStock === 0;
+                return (
+                  <article className="ticket-type-card" key={ticketType.id}>
+                    <div>
+                      <div className="ticket-type-card__title">
+                        <h3>{ticketType.name}</h3>
+                        <Badge tone={soldOut ? 'error' : 'success'}>
+                          {soldOut ? 'Hết vé' : `${ticketType.remainingStock} vé`}
+                        </Badge>
+                      </div>
+                      <p>{ticketType.description}</p>
                     </div>
-                    <p>{ticketType.description}</p>
-                  </div>
 
-                  <div className="ticket-type-card__footer">
-                    <strong>{formatPrice(ticketType.price)}</strong>
-                    {soldOut ? (
-                      <button type="button" disabled>
-                        Hết vé
-                      </button>
-                    ) : (
-                      <Link to={routePaths.checkout(event.id, ticketType.id)}>Đặt vé</Link>
-                    )}
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        </aside>
+                    <div className="ticket-type-card__footer">
+                      <strong>{formatPrice(ticketType.price)}</strong>
+                      {soldOut ? (
+                        <button type="button" disabled>
+                          Hết vé
+                        </button>
+                      ) : (
+                        <Link to={routePaths.checkout(event.id, ticketType.id)}>Đặt vé</Link>
+                      )}
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </aside>
+        )}
       </section>
     </MainLayout>
   );
 };
-

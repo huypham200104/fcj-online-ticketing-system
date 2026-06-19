@@ -37,10 +37,10 @@
 
 /* ─── Variants ──────────────────────────────────────── */
 
-/* Primary — gradient violet */
+/* Primary */
 .btn--primary {
   background: var(--gradient-primary);
-  color: #ffffff;
+  color: var(--color-text-inverse);
   box-shadow: var(--shadow-md);
 }
 .btn--primary:hover:not(:disabled) {
@@ -90,7 +90,7 @@
 
 /* Google */
 .btn--google {
-  background: var(--color-bg-surface);
+  background: var(--color-bg-subtle);
   color: var(--color-text-primary);
   border: 1.5px solid var(--color-border);
   box-shadow: var(--shadow-xs);
@@ -116,8 +116,8 @@
   display: inline-block;
   width: 16px;
   height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: #ffffff;
+  border: 2px solid var(--color-primary-200);
+  border-top-color: var(--color-text-inverse);
   border-radius: 50%;
   animation: btn-spin 0.7s linear infinite;
   flex-shrink: 0;

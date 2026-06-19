@@ -29,7 +29,7 @@ export const PaymentResultPage: React.FC<PaymentResultPageProps> = ({ status }) 
         <h1>{isSuccess ? 'Thanh toán thành công' : 'Thanh toán thất bại'}</h1>
         <p>
           {isSuccess
-            ? 'Đơn hàng đã được xử lý bằng mock payment. Vé QR đã được tạo và lưu vào danh sách vé của bạn.'
+            ? 'Đơn hàng đã được xử lý qua backend. Vé QR đã được tạo và lưu vào danh sách vé của bạn.'
             : reasonText[reason] ?? 'Giao dịch chưa hoàn tất. Vui lòng thử lại với phiên giữ vé mới.'}
         </p>
 
@@ -52,4 +52,3 @@ export const PaymentResultPage: React.FC<PaymentResultPageProps> = ({ status }) 
     </MainLayout>
   );
 };
-

@@ -1,21 +1,25 @@
 import { useState } from 'react';
-import type { MockPaymentOutcome, PaymentResult } from '@/domain/entities/Payment';
-import { ProcessMockPaymentUseCase } from '@/application/use-cases/payment/ProcessMockPaymentUseCase';
-import { MockPaymentService } from '@/infrastructure/payment/MockPaymentService';
+import type { PaymentResult } from '@/domain/entities/Payment';
+import type { BookingSession } from '@/domain/entities/BookingSession';
+import { ProcessPaymentUseCase } from '@/application/use-cases/payment/ProcessPaymentUseCase';
+import { ApiPaymentService } from '@/infrastructure/payment/ApiPaymentService';
 
-const processMockPaymentUseCase = new ProcessMockPaymentUseCase(new MockPaymentService());
+const processPaymentUseCase = new ProcessPaymentUseCase(new ApiPaymentService());
 
 export function usePayment() {
   const [result, setResult] = useState<PaymentResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const processPayment = async (sessionId: string, outcome: MockPaymentOutcome) => {
+  const processPayment = async (session: BookingSession) => {
     setLoading(true);
     setError(null);
 
     try {
-      const paymentResult = await processMockPaymentUseCase.execute({ sessionId, outcome });
+      const paymentResult = await processPaymentUseCase.execute({
+        sessionId: session.id,
+        totalAmount: session.totalPrice,
+      });
       setResult(paymentResult);
       return paymentResult;
     } catch (err) {
@@ -28,4 +32,3 @@ export function usePayment() {
 
   return { result, loading, error, processPayment };
 }
-

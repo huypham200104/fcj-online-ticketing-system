@@ -117,7 +117,7 @@ export const RegisterPage: React.FC = () => {
         {/* Header */}
         <div className="register-page__header">
           <h1 className="register-page__title">Create account ✨</h1>
-          <p className="register-page__subtitle">Join thousands of event lovers today</p>
+          <p className="register-page__subtitle">Đặt vé phim và concert nhanh hơn với Cinematic Pulse</p>
         </div>
 
         {/* Global error */}

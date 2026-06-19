@@ -1,0 +1,1 @@
+export { EventCatalogPage } from './EventCatalogPage';

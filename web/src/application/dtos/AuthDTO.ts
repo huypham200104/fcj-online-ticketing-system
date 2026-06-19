@@ -15,11 +15,13 @@ export interface RegisterDTO {
 }
 
 export interface AuthResponseDTO {
-  accessToken: string;
+  accessToken?: string;
   user: {
     id: string;
+    username?: string;
     email: string;
     name: string;
     role: string;
+    avatarUrl?: string;
   };
 }

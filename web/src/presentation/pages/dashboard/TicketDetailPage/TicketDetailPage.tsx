@@ -40,7 +40,7 @@ export const TicketDetailPage: React.FC = () => {
         <PageState
           variant="error"
           title="Không tìm thấy vé"
-          description={error ?? 'Vé này không tồn tại trong mock data.'}
+          description={error ?? 'Backend không trả về vé này cho tài khoản hiện tại.'}
           action={
             <div className="ticket-detail__state-actions">
               <button type="button" onClick={reload}>Thử lại</button>
@@ -83,6 +83,12 @@ export const TicketDetailPage: React.FC = () => {
               <dt>Thời gian</dt>
               <dd>{ticket.eventDateLabel}</dd>
             </div>
+            {ticket.seatLabel ? (
+              <div>
+                <dt>Ghế</dt>
+                <dd>{ticket.seatLabel}</dd>
+              </div>
+            ) : null}
             <div>
               <dt>Địa điểm</dt>
               <dd>{ticket.venueName}</dd>
@@ -97,4 +103,3 @@ export const TicketDetailPage: React.FC = () => {
     </MainLayout>
   );
 };
-

@@ -1,31 +1,44 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
+import type { ReactNode } from 'react';
 import { LoginPage } from '@/presentation/pages/auth/LoginPage';
 import { RegisterPage } from '@/presentation/pages/auth/RegisterPage';
 import { HomePage } from '@/presentation/pages/home/HomePage';
 import { EventDetailPage } from '@/presentation/pages/events/EventDetailPage';
+import { EventCatalogPage } from '@/presentation/pages/events/EventCatalogPage';
 import { CheckoutPage } from '@/presentation/pages/booking/CheckoutPage';
 import { PaymentResultPage } from '@/presentation/pages/payment/PaymentResultPage';
 import { MyTicketsPage } from '@/presentation/pages/dashboard/MyTicketsPage';
 import { TicketDetailPage } from '@/presentation/pages/dashboard/TicketDetailPage';
+import { AdminPage } from '@/presentation/pages/admin/AdminPage';
+import { CheckInPage } from '@/presentation/pages/staff/CheckInPage';
 import { ROUTES } from './routes';
+import { ScrollToTop } from './ScrollToTop';
+
+function withScrollReset(element: ReactNode) {
+  return <ScrollToTop>{element}</ScrollToTop>;
+}
 
 export const router = createBrowserRouter([
   // Root redirect → Login
-  { path: ROUTES.HOME, element: <Navigate to={ROUTES.LOGIN} replace /> },
+  { path: ROUTES.HOME, element: withScrollReset(<Navigate to={ROUTES.LOGIN} replace />) },
 
   // Auth
-  { path: ROUTES.LOGIN,    element: <LoginPage /> },
-  { path: ROUTES.REGISTER, element: <RegisterPage /> },
+  { path: ROUTES.LOGIN,    element: withScrollReset(<LoginPage />) },
+  { path: ROUTES.REGISTER, element: withScrollReset(<RegisterPage />) },
 
   // App
-  { path: ROUTES.EVENTS, element: <HomePage /> },
-  { path: ROUTES.EVENT_DETAIL, element: <EventDetailPage /> },
-  { path: ROUTES.CHECKOUT, element: <CheckoutPage /> },
-  { path: ROUTES.PAYMENT_SUCCESS, element: <PaymentResultPage status="success" /> },
-  { path: ROUTES.PAYMENT_FAILED, element: <PaymentResultPage status="failed" /> },
-  { path: ROUTES.MY_TICKETS, element: <MyTicketsPage /> },
-  { path: ROUTES.MY_TICKET_DETAIL, element: <TicketDetailPage /> },
+  { path: ROUTES.EVENTS, element: withScrollReset(<HomePage />) },
+  { path: ROUTES.MOVIES, element: withScrollReset(<EventCatalogPage category="Phim" />) },
+  { path: ROUTES.CONCERTS, element: withScrollReset(<EventCatalogPage category="Concert" />) },
+  { path: ROUTES.EVENT_DETAIL, element: withScrollReset(<EventDetailPage />) },
+  { path: ROUTES.CHECKOUT, element: withScrollReset(<CheckoutPage />) },
+  { path: ROUTES.PAYMENT_SUCCESS, element: withScrollReset(<PaymentResultPage status="success" />) },
+  { path: ROUTES.PAYMENT_FAILED, element: withScrollReset(<PaymentResultPage status="failed" />) },
+  { path: ROUTES.MY_TICKETS, element: withScrollReset(<MyTicketsPage />) },
+  { path: ROUTES.MY_TICKET_DETAIL, element: withScrollReset(<TicketDetailPage />) },
+  { path: ROUTES.ADMIN, element: withScrollReset(<AdminPage />) },
+  { path: ROUTES.CHECK_IN, element: withScrollReset(<CheckInPage />) },
 
   // Catch-all
-  { path: '*', element: <Navigate to={ROUTES.LOGIN} replace /> },
+  { path: '*', element: withScrollReset(<Navigate to={ROUTES.LOGIN} replace />) },
 ]);

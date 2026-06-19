@@ -6,6 +6,7 @@ export interface Ticket {
   eventId: string;
   eventTitle: string;
   ticketTypeName: string;
+  seatLabel?: string;
   holderName: string;
   eventDateLabel: string;
   venueName: string;
@@ -14,4 +15,3 @@ export interface Ticket {
   status: TicketStatus;
   qrValue: string;
 }
-

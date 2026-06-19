@@ -14,7 +14,7 @@
   font-size: 28px;
   font-weight: 800;
   color: var(--color-text-primary);
-  letter-spacing: -0.03em;
+  letter-spacing: 0;
   margin-bottom: 6px;
   line-height: 1.2;
 }
@@ -102,7 +102,7 @@
   text-align: right;
 }
 .register-page__strength-label--1 { color: var(--color-error); }
-.register-page__strength-label--2 { color: var(--color-warning-dark, #b7791f); }
+.register-page__strength-label--2 { color: var(--color-warning-dark); }
 .register-page__strength-label--3 { color: var(--color-info); }
 .register-page__strength-label--4 { color: var(--color-success); }
 
@@ -140,8 +140,8 @@
   display: block;
   width: 4px;
   height: 8px;
-  border-right: 2px solid #fff;
-  border-bottom: 2px solid #fff;
+  border-right: 2px solid var(--color-text-inverse);
+  border-bottom: 2px solid var(--color-text-inverse);
   transform: rotate(45deg) translateY(-1px);
 }
 

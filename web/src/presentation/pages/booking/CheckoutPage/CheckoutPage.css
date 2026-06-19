@@ -22,9 +22,15 @@
 }
 
 .checkout-page__heading p {
-  max-width: 680px;
+  max-width: 720px;
   margin-top: 10px;
   color: var(--color-text-secondary);
+}
+
+.checkout-page__heading-actions {
+  display: grid;
+  justify-items: end;
+  gap: 10px;
 }
 
 .checkout-page__heading a,
@@ -41,11 +47,60 @@
   box-shadow: var(--shadow-sm);
 }
 
+.checkout-hold-timer {
+  display: grid;
+  gap: 4px;
+  min-width: 210px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-surface);
+}
+
+.checkout-hold-timer span,
+.checkout-hold-timer small {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.checkout-hold-timer strong {
+  color: var(--color-primary-700);
+  font-size: 34px;
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.checkout-hold-timer--active {
+  border-color: var(--color-primary-500);
+  background: var(--color-primary-50);
+}
+
+.checkout-hold-timer--expired {
+  border-color: var(--color-error);
+  background: var(--color-error-light);
+}
+
+.checkout-hold-timer--expired strong {
+  color: var(--color-error-dark);
+}
+
 .checkout-page__grid {
   grid-template-columns: minmax(0, 1fr) 380px;
   align-items: start;
 }
 
+.checkout-page__grid--wide {
+  grid-template-columns: minmax(0, 1fr) 360px;
+}
+
+.checkout-flow {
+  display: grid;
+  gap: 18px;
+}
+
+.checkout-step,
 .checkout-page__panel,
 .checkout-summary {
   border: 1px solid var(--color-border);
@@ -54,12 +109,37 @@
   box-shadow: var(--shadow-sm);
 }
 
+.checkout-step,
 .checkout-page__panel {
   display: grid;
-  gap: 22px;
-  padding: 24px;
+  gap: 18px;
+  padding: 22px;
 }
 
+.checkout-step--seat-map {
+  background: var(--gradient-surface);
+}
+
+.checkout-step__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.checkout-step__header > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  background: var(--gradient-primary);
+  color: var(--color-text-inverse);
+  font-weight: 900;
+}
+
+.checkout-step__header h2,
 .checkout-page__panel h2,
 .checkout-summary__header span {
   font-size: 20px;
@@ -67,42 +147,7 @@
   letter-spacing: 0;
 }
 
-.checkout-page__ticket-options {
-  display: grid;
-  gap: 12px;
-}
-
-.checkout-ticket {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 14px;
-  align-items: center;
-  width: 100%;
-  min-height: 92px;
-  padding: 16px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-bg-base);
-  color: var(--color-text-primary);
-  font: inherit;
-  text-align: left;
-}
-
-.checkout-ticket--active {
-  border-color: var(--color-primary-500);
-  background: var(--color-primary-50);
-  box-shadow: var(--shadow-sm);
-}
-
-.checkout-ticket span {
-  display: grid;
-  gap: 4px;
-}
-
-.checkout-ticket strong {
-  font-size: 16px;
-}
-
+.checkout-step__header p,
 .checkout-ticket small,
 .checkout-page__quantity p,
 .checkout-summary__session p {
@@ -110,10 +155,269 @@
   font-size: 13px;
 }
 
+.cinema-picker,
+.showtime-picker,
+.checkout-page__ticket-options {
+  display: grid;
+  gap: 12px;
+}
+
+.cinema-picker {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.showtime-picker {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.cinema-picker__item,
+.showtime-picker__item,
+.checkout-ticket {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  min-height: 100px;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-base);
+  color: var(--color-text-primary);
+  font: inherit;
+  text-align: left;
+  transition: var(--transition-fast);
+}
+
+.cinema-picker__item:hover,
+.cinema-picker__item--active,
+.showtime-picker__item:hover,
+.showtime-picker__item--active,
+.checkout-ticket--active {
+  border-color: var(--color-primary-500);
+  background: var(--color-primary-50);
+  box-shadow: var(--shadow-sm);
+}
+
+.cinema-picker__item strong,
+.showtime-picker__item strong,
+.checkout-ticket strong {
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.cinema-picker__item span,
+.showtime-picker__item span {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.cinema-picker__item small,
+.showtime-picker__item small,
 .checkout-ticket em {
   color: var(--color-primary-700);
+  font-size: 12px;
   font-style: normal;
   font-weight: 900;
+}
+
+.cinema-picker__item:disabled,
+.checkout-ticket:disabled {
+  background: var(--color-bg-subtle);
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.cinema-picker__item:disabled span,
+.cinema-picker__item:disabled small,
+.checkout-ticket:disabled em {
+  color: var(--color-text-disabled);
+}
+
+.showtime-picker__empty {
+  display: grid;
+  gap: 6px;
+  padding: 18px;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-subtle);
+}
+
+.showtime-picker__empty strong {
+  color: var(--color-text-primary);
+  font-size: 15px;
+}
+
+.showtime-picker__empty p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.showtime-picker__item:disabled {
+  background: var(--color-bg-subtle);
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.showtime-picker__item:disabled span,
+.showtime-picker__item:disabled small {
+  color: var(--color-text-disabled);
+}
+
+.seat-map-card {
+  display: grid;
+  gap: 22px;
+  overflow-x: auto;
+  padding: 24px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-base);
+}
+
+.seat-map-card--empty {
+  min-height: 300px;
+  place-items: center;
+  text-align: center;
+}
+
+.seat-map-card--empty strong {
+  font-size: 20px;
+}
+
+.seat-map-card--empty p {
+  color: var(--color-text-secondary);
+}
+
+.seat-map-card__screen {
+  display: flex;
+  justify-content: center;
+  padding-top: 12px;
+}
+
+.seat-map-card__screen span {
+  width: min(620px, 86%);
+  padding-top: 18px;
+  border-top: 2px solid var(--color-border-focus);
+  border-radius: var(--radius-full) var(--radius-full) 0 0;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.seat-map-card__rows {
+  display: grid;
+  gap: 10px;
+  min-width: 760px;
+}
+
+.seat-row {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) 28px;
+  align-items: center;
+  gap: 10px;
+}
+
+.seat-row__label {
+  color: var(--color-text-disabled);
+  font-size: 12px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.seat-row__seats {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(36px, 1fr));
+  gap: 8px;
+}
+
+.seat-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  min-width: 36px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xs) var(--radius-xs) var(--radius-sm) var(--radius-sm);
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 900;
+  transition: var(--transition-fast);
+}
+
+.seat-button--available {
+  background: var(--color-bg-subtle);
+}
+
+.seat-button--available:hover {
+  border-color: var(--color-primary-500);
+  background: var(--color-primary-50);
+  color: var(--color-primary-700);
+}
+
+.seat-button--selected {
+  border-color: var(--color-primary-500);
+  background: var(--gradient-primary);
+  color: var(--color-text-inverse);
+  box-shadow: var(--shadow-sm);
+}
+
+.seat-button--taken,
+.seat-button--locked {
+  cursor: not-allowed;
+}
+
+.seat-button--taken {
+  border-color: var(--color-error);
+  background: var(--color-error-light);
+  color: var(--color-error-dark);
+}
+
+.seat-button--locked {
+  border-color: var(--color-warning);
+  background: var(--color-warning-light);
+  color: var(--color-warning-dark);
+}
+
+.seat-map-card__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.seat-map-card__legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legend-seat {
+  width: 20px;
+  height: 18px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xs) var(--radius-xs) var(--radius-sm) var(--radius-sm);
+}
+
+.legend-seat--available {
+  background: var(--color-bg-subtle);
+}
+
+.legend-seat--taken {
+  border-color: var(--color-error);
+  background: var(--color-error-light);
+}
+
+.legend-seat--selected {
+  border-color: var(--color-primary-500);
+  background: var(--gradient-primary);
 }
 
 .checkout-page__quantity {
@@ -145,6 +449,11 @@
   font: inherit;
   font-size: 20px;
   font-weight: 900;
+}
+
+.quantity-stepper button:disabled {
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
 }
 
 .quantity-stepper strong {
@@ -181,7 +490,7 @@
 
 .checkout-summary {
   position: sticky;
-  top: 96px;
+  top: 108px;
   display: grid;
   gap: 18px;
   padding: 22px;
@@ -230,6 +539,11 @@
   background: var(--color-bg-subtle);
 }
 
+.checkout-summary__session--expired {
+  border-color: var(--color-error);
+  background: var(--color-error-light);
+}
+
 .checkout-summary__session span {
   color: var(--color-primary-700);
   font-weight: 900;
@@ -240,16 +554,36 @@
   gap: 10px;
 }
 
-.checkout-summary__actions button + button {
+.checkout-summary__action--danger {
   background: var(--color-bg-surface);
   color: var(--color-error-dark);
   border: 1px solid var(--color-error);
 }
 
+.checkout-summary__action--danger:hover {
+  background: var(--color-error-light);
+}
+
+@media (max-width: 1120px) {
+  .cinema-picker,
+  .showtime-picker {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 920px) {
   .checkout-page__heading,
-  .checkout-page__grid {
+  .checkout-page__grid,
+  .checkout-page__grid--wide {
     grid-template-columns: 1fr;
+  }
+
+  .checkout-page__heading-actions {
+    justify-items: stretch;
+  }
+
+  .checkout-hold-timer {
+    min-width: 0;
   }
 
   .checkout-summary {
@@ -264,8 +598,15 @@
     flex-direction: column;
   }
 
-  .checkout-ticket {
+  .checkout-ticket,
+  .cinema-picker,
+  .showtime-picker {
     grid-template-columns: 1fr;
   }
-}
 
+  .checkout-step,
+  .checkout-page__panel,
+  .seat-map-card {
+    padding: 16px;
+  }
+}

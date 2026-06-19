@@ -33,12 +33,13 @@ export function useCountdown(expiresAt?: string) {
     };
   }, [expiresAt]);
 
-  return useMemo(
-    () => ({
-      remainingMs,
-      formatted: formatRemaining(remainingMs),
-      isExpired: Boolean(expiresAt) && remainingMs <= 0,
-    }),
-    [expiresAt, remainingMs],
-  );
+  return useMemo(() => {
+    const effectiveRemainingMs = expiresAt ? remainingMs : 0;
+
+    return {
+      remainingMs: effectiveRemainingMs,
+      formatted: formatRemaining(effectiveRemainingMs),
+      isExpired: Boolean(expiresAt) && effectiveRemainingMs <= 0,
+    };
+  }, [expiresAt, remainingMs]);
 }
