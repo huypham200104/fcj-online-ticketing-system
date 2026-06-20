@@ -219,7 +219,7 @@ export class ApiEventService implements IEventService {
     category: TicketEvent['category'],
     page: number,
     pageSize: number,
-    filters?: { q?: string; city?: string },
+    filters?: { q?: string; city?: string; date?: string; format?: string; maxPrice?: string },
   ): Promise<PaginatedResult<TicketEvent>> {
     const params = new URLSearchParams({
       type: category === 'Phim' ? 'movie' : 'concert',
@@ -228,6 +228,9 @@ export class ApiEventService implements IEventService {
     });
     if (filters?.q) params.set('q', filters.q);
     if (filters?.city) params.set('city', filters.city);
+    if (filters?.date) params.set('date', filters.date);
+    if (filters?.format) params.set('format', filters.format);
+    if (filters?.maxPrice) params.set('maxPrice', filters.maxPrice);
     const response = await apiRequestEnvelope<BackendEvent[]>(`/events?${params.toString()}`, { auth: false });
     const items = await Promise.all((response.data ?? []).map((event, index) => mapEvent(event, index)));
 

@@ -19,6 +19,9 @@ export class ApiPaymentService implements IPaymentService {
     try {
       const result = await apiRequest<CheckoutResponse>('/bookings/checkout', {
         method: 'POST',
+        headers: {
+          'Idempotency-Key': `checkout:${dto.sessionId}`,
+        },
         body: {
           bookingSessionId: dto.sessionId,
           paymentMethod: dto.paymentMethod ?? 'card',

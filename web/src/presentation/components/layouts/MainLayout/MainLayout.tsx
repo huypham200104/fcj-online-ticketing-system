@@ -15,6 +15,9 @@ interface MainLayoutProps {
 
 export const MainLayout: React.FC<MainLayoutProps> = ({ children, contentClassName = '' }) => {
   const session = getAuthSession();
+  const role = session?.user.role;
+  const canCheckIn = role === 'staff' || role === 'admin';
+  const canManageAdmin = role === 'admin';
 
   return (
     <div className="main-layout">
@@ -26,8 +29,10 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, contentClassNa
 
         <nav className="main-layout__nav" aria-label="Main navigation">
           <NavLink to={ROUTES.EVENTS}>Phim & Concert</NavLink>
-          <NavLink to={ROUTES.MY_TICKETS}>Vé của tôi</NavLink>
-          <NavLink to={ROUTES.CHECK_IN}>Soát vé QR</NavLink>
+          {session ? <NavLink to={ROUTES.MY_TICKETS}>Vé của tôi</NavLink> : null}
+          {session ? <NavLink to={ROUTES.ORDER_HISTORY}>Đơn hàng</NavLink> : null}
+          {canCheckIn ? <NavLink to={ROUTES.CHECK_IN}>Soát vé QR</NavLink> : null}
+          {canManageAdmin ? <NavLink to={ROUTES.ADMIN}>Admin</NavLink> : null}
         </nav>
 
         {session ? (

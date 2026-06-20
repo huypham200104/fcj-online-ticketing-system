@@ -2,6 +2,8 @@ export const ROUTES = {
   HOME: '/',
   LOGIN: '/auth/login',
   REGISTER: '/auth/register',
+  FORGOT_PASSWORD: '/auth/forgot-password',
+  RESET_PASSWORD: '/auth/reset-password',
   EVENTS: '/events',
   MOVIES: '/events/movies',
   CONCERTS: '/events/concerts',
@@ -12,6 +14,7 @@ export const ROUTES = {
   MY_TICKETS: '/my-tickets',
   MY_TICKET_DETAIL: '/my-tickets/:id',
   ORDER_HISTORY: '/orders',
+  ORDER_DETAIL: '/orders/:id',
   ADMIN: '/admin',
   ADMIN_EVENT_NEW: '/admin/events/new',
   ADMIN_EVENTS: '/admin/events',
@@ -50,4 +53,5 @@ export const routePaths = {
     return `${ROUTES.PAYMENT_FAILED}?${params.toString()}`;
   },
   ticketDetail: (ticketId: string) => `/my-tickets/${ticketId}`,
+  orderDetail: (orderId: string) => `/orders/${orderId}`,
 };

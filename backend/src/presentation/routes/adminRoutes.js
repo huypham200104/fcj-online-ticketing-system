@@ -26,10 +26,14 @@ export function createAdminRouter(adminController) {
   router.patch('/orders/:id/cancel', adminController.cancelOrder);
 
   router.get('/users', adminController.getUsers);
+  router.post('/users', adminController.createUser);
   router.patch('/users/:id', adminController.updateUser);
+  router.patch('/users/:id/profile', adminController.updateUserProfile);
+  router.patch('/users/:id/password', adminController.resetUserPassword);
 
   router.get('/reports', adminController.getReports);
   router.get('/system', adminController.getSystemStatus);
+  router.get('/audit', adminController.getAuditLogs);
 
   return router;
 }

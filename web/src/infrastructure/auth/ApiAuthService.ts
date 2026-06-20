@@ -1,5 +1,12 @@
 import type { IAuthService } from '@/application/ports/IAuthService';
-import type { AuthResponseDTO, LoginDTO, RegisterDTO } from '@/application/dtos/AuthDTO';
+import type {
+  AuthResponseDTO,
+  ForgotPasswordDTO,
+  ForgotPasswordResponseDTO,
+  LoginDTO,
+  RegisterDTO,
+  ResetPasswordDTO,
+} from '@/application/dtos/AuthDTO';
 import { apiRequest } from '@/infrastructure/api/httpClient';
 import { clearAuthSession, saveAuthSession, updateAuthSessionUser } from '@/infrastructure/api/authSession';
 
@@ -45,6 +52,22 @@ export class ApiAuthService implements IAuthService {
 
   async loginWithGoogle(): Promise<AuthResponseDTO> {
     throw new Error('Backend hiện chưa hỗ trợ đăng nhập Google.');
+  }
+
+  async forgotPassword(dto: ForgotPasswordDTO): Promise<ForgotPasswordResponseDTO> {
+    return apiRequest<ForgotPasswordResponseDTO>('/auth/forgot-password', {
+      method: 'POST',
+      body: dto,
+      auth: false,
+    });
+  }
+
+  async resetPassword(dto: ResetPasswordDTO): Promise<{ passwordChanged: boolean }> {
+    return apiRequest<{ passwordChanged: boolean }>('/auth/reset-password', {
+      method: 'POST',
+      body: dto,
+      auth: false,
+    });
   }
 
   async logout(): Promise<void> {

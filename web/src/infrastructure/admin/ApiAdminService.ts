@@ -95,6 +95,15 @@ export interface AdminUser {
   createdAt: string;
 }
 
+export interface CreateAdminUserPayload {
+  name: string;
+  email: string;
+  password: string;
+  role: AdminUserRole;
+  status: AdminUserStatus;
+  avatarUrl?: string;
+}
+
 export interface AdminSystemStatus {
   apiStatus: 'ok' | 'degraded';
   startedAt: string;
@@ -104,6 +113,22 @@ export interface AdminSystemStatus {
   queuePending: number;
   cloudWatchAlerts: string[];
   memoryMb: number;
+}
+
+export interface AdminAuditLog {
+  id: string;
+  actor: {
+    id: string;
+    email: string | null;
+    name: string;
+    role: string | null;
+  };
+  action: string;
+  entityType: string;
+  entityId: string | null;
+  message: string;
+  metadata: Record<string, unknown>;
+  createdAt: string;
 }
 
 export interface AdminOverview {
@@ -218,8 +243,20 @@ export class ApiAdminService {
     return apiRequest<AdminUser[]>('/admin/users');
   }
 
+  createUser(payload: CreateAdminUserPayload): Promise<AdminUser> {
+    return apiRequest<AdminUser>('/admin/users', { method: 'POST', body: payload });
+  }
+
   updateUser(userId: string, payload: Pick<AdminUser, 'role' | 'status'>): Promise<AdminUser> {
     return apiRequest<AdminUser>(`/admin/users/${userId}`, { method: 'PATCH', body: payload });
+  }
+
+  updateUserProfile(userId: string, payload: Partial<Pick<AdminUser, 'name' | 'role' | 'status'> & { avatarUrl: string }>): Promise<AdminUser> {
+    return apiRequest<AdminUser>(`/admin/users/${userId}/profile`, { method: 'PATCH', body: payload });
+  }
+
+  resetUserPassword(userId: string, password: string): Promise<{ passwordChanged: boolean }> {
+    return apiRequest<{ passwordChanged: boolean }>(`/admin/users/${userId}/password`, { method: 'PATCH', body: { password } });
   }
 
   getReports(): Promise<AdminReports> {
@@ -228,5 +265,9 @@ export class ApiAdminService {
 
   getSystemStatus(): Promise<AdminSystemStatus> {
     return apiRequest<AdminSystemStatus>('/admin/system');
+  }
+
+  getAuditLogs(limit = 100): Promise<AdminAuditLog[]> {
+    return apiRequest<AdminAuditLog[]>(`/admin/audit?limit=${limit}`);
   }
 }

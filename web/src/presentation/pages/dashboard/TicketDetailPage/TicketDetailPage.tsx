@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import type { TicketStatus } from '@/domain/entities/Ticket';
+import { ApiTicketService } from '@/infrastructure/tickets/ApiTicketService';
 import { Badge } from '@/presentation/components/ui/Badge';
 import { MainLayout } from '@/presentation/components/layouts/MainLayout';
 import { PageState } from '@/presentation/components/shared/PageState';
@@ -8,6 +9,8 @@ import { QRCodeView } from '@/presentation/components/shared/QRCodeView';
 import { useTicketDetail } from '@/presentation/hooks/useTicketDetail';
 import { ROUTES } from '@/presentation/router/routes';
 import './TicketDetailPage.css';
+
+const ticketService = new ApiTicketService();
 
 function getStatusTone(status: TicketStatus) {
   if (status === 'valid') return 'success';
@@ -25,6 +28,21 @@ function getStatusLabel(status: TicketStatus) {
 export const TicketDetailPage: React.FC = () => {
   const { id } = useParams();
   const { ticket, loading, error, reload } = useTicketDetail(id);
+  const [downloadLoading, setDownloadLoading] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+
+  const handleDownload = async () => {
+    if (!id) return;
+    setDownloadLoading(true);
+    setDownloadError(null);
+    try {
+      await ticketService.downloadTicket(id);
+    } catch (err) {
+      setDownloadError(err instanceof Error ? err.message : 'Không thể tải vé điện tử.');
+    } finally {
+      setDownloadLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -60,8 +78,15 @@ export const TicketDetailPage: React.FC = () => {
           <h1>{ticket.eventTitle}</h1>
           <p>{ticket.ticketTypeName}</p>
         </div>
-        <Link to={ROUTES.MY_TICKETS}>Về vé của tôi</Link>
+        <div className="ticket-detail__heading-actions">
+          <button type="button" onClick={handleDownload} disabled={downloadLoading}>
+            {downloadLoading ? 'Đang tải...' : 'Tải vé điện tử'}
+          </button>
+          <Link to={ROUTES.MY_TICKETS}>Về vé của tôi</Link>
+        </div>
       </section>
+
+      {downloadError ? <div className="ticket-detail__alert" role="alert">{downloadError}</div> : null}
 
       <section className="ticket-detail__grid">
         <article className="ticket-detail__qr-panel">

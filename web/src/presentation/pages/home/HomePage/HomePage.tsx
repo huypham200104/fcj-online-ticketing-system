@@ -114,6 +114,9 @@ export const HomePage: React.FC = () => {
   const [selectedCity, setSelectedCity] = useState('TP. HCM');
   const routeState = location.state as HomeRouteState | null;
   const notification = routeState?.notification;
+  const role = session?.user.role;
+  const canCheckIn = role === 'staff' || role === 'admin';
+  const canManageAdmin = role === 'admin';
 
   const handleSearch = (event: React.FormEvent) => {
     event.preventDefault();
@@ -136,7 +139,9 @@ export const HomePage: React.FC = () => {
         <nav className="home-header__nav" aria-label="Main navigation">
           <a href="#movies">Phim Đang Chiếu</a>
           <a href="#concerts">Concert</a>
-          <Link to={ROUTES.MY_TICKETS}>Vé của tôi</Link>
+          {session ? <Link to={ROUTES.MY_TICKETS}>Vé của tôi</Link> : null}
+          {canCheckIn ? <Link to={ROUTES.CHECK_IN}>Soát vé QR</Link> : null}
+          {canManageAdmin ? <Link to={ROUTES.ADMIN}>Admin</Link> : null}
         </nav>
 
         {session ? (

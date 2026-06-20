@@ -1,16 +1,17 @@
 import { AppError } from '../../domain/errors/AppError.js';
 
 export class CheckInTicketUseCase {
-  constructor(ticketRepository, showTimeRepository, eventRepository, venueRepository, seatRepository, userRepository) {
+  constructor(ticketRepository, showTimeRepository, eventRepository, venueRepository, seatRepository, userRepository, auditLogRepository = null) {
     this.ticketRepository = ticketRepository;
     this.showTimeRepository = showTimeRepository;
     this.eventRepository = eventRepository;
     this.venueRepository = venueRepository;
     this.seatRepository = seatRepository;
     this.userRepository = userRepository;
+    this.auditLogRepository = auditLogRepository;
   }
 
-  async execute({ ticketId, qrPayload, staffUser }) {
+  async execute({ ticketId, qrPayload, showTimeId, staffUser }) {
     const scannedAt = new Date().toISOString();
     const staffProfile = staffUser?.id ? await this.userRepository.findById(staffUser.id) : null;
     const staff = {
@@ -20,19 +21,11 @@ export class CheckInTicketUseCase {
     };
 
     try {
-      if (!ticketId || !qrPayload) {
-        throw new AppError('Thiếu mã vé hoặc QR payload', 400);
+      if (!qrPayload) {
+        throw new AppError('Thiếu QR payload', 400);
       }
 
-      const ticket = await this.ticketRepository.findById(ticketId);
-      
-      if (!ticket) {
-        throw new AppError('Vé không tồn tại', 404);
-      }
-
-      if (ticket.qrCode !== qrPayload) {
-        throw new AppError('Mã QR không hợp lệ', 400);
-      }
+      const ticket = await this.resolveTicket({ ticketId, qrPayload });
 
       if (ticket.status === 'checked-in') {
         throw new AppError('Vé này đã được sử dụng để vào rạp', 409);
@@ -42,10 +35,7 @@ export class CheckInTicketUseCase {
         throw new AppError(`Trạng thái vé không hợp lệ để check-in: ${ticket.status}`, 400);
       }
 
-      const showTime = await this.showTimeRepository.findById(ticket.showTimeId);
-      if (showTime && showTime.isPast()) {
-        throw new AppError('Suất chiếu đã kết thúc, không thể check-in', 400);
-      }
+      await this.validateCheckInWindow(ticket, showTimeId);
 
       ticket.status = 'checked-in';
       ticket.checkedInAt = scannedAt;
@@ -60,7 +50,16 @@ export class CheckInTicketUseCase {
         staff
       });
 
-      return this.ticketRepository.recordCheckInAttempt(result);
+      const savedRecord = await this.ticketRepository.recordCheckInAttempt(result);
+      await this.auditLogRepository?.record({
+        actor: { ...staff, role: staffUser?.role || 'staff' },
+        action: 'ticket.checkin.success',
+        entityType: 'ticket',
+        entityId: ticket.id,
+        message: `Check-in thành công vé ${ticket.id.slice(0, 8).toUpperCase()}`,
+        metadata: { showTimeId: ticket.showTimeId, seatId: ticket.seatId }
+      });
+      return savedRecord;
     } catch (error) {
       await this.ticketRepository.recordCheckInAttempt({
         ticketId: ticketId || 'unknown',
@@ -69,8 +68,75 @@ export class CheckInTicketUseCase {
         scannedAt,
         staff
       });
+      await this.auditLogRepository?.record({
+        actor: { ...staff, role: staffUser?.role || 'staff' },
+        action: 'ticket.checkin.failed',
+        entityType: 'ticket',
+        entityId: ticketId || null,
+        message: error instanceof Error ? error.message : 'Không thể check-in vé.',
+        metadata: { showTimeId }
+      });
       throw error;
     }
+  }
+
+  async validateCheckInWindow(ticket, selectedShowTimeId) {
+    if (selectedShowTimeId && ticket.showTimeId !== selectedShowTimeId) {
+      throw new AppError('Vé không thuộc suất chiếu đang chọn tại điểm check-in.', 400);
+    }
+
+    const showTime = await this.showTimeRepository.findById(ticket.showTimeId);
+    if (!showTime) return null;
+
+    if (!selectedShowTimeId) {
+      if (showTime.isPast()) {
+        throw new AppError('Suất chiếu đã kết thúc, không thể check-in', 400);
+      }
+      return showTime;
+    }
+
+    const event = await this.eventRepository.findById(showTime.eventId);
+    const startAt = new Date(`${showTime.date}T${showTime.time}:00`);
+    if (Number.isNaN(startAt.getTime())) return showTime;
+
+    const now = new Date();
+    const openAt = new Date(startAt.getTime() - 60 * 60 * 1000);
+    const closeAt = new Date(startAt.getTime() + (Number(event?.duration) || 120) * 60 * 1000);
+
+    if (now < openAt) {
+      throw new AppError('Chưa đến thời gian check-in cho suất chiếu này.', 400);
+    }
+
+    if (now > closeAt) {
+      throw new AppError('Suất chiếu đã kết thúc, không thể check-in', 400);
+    }
+
+    return showTime;
+  }
+
+  async resolveTicket({ ticketId, qrPayload }) {
+    if (ticketId) {
+      const ticket = await this.ticketRepository.findById(ticketId);
+
+      if (!ticket) {
+        throw new AppError('Vé không tồn tại', 404);
+      }
+
+      if (ticket.qrCode !== qrPayload) {
+        throw new AppError('Mã QR không hợp lệ', 400);
+      }
+
+      return ticket;
+    }
+
+    const tickets = await this.ticketRepository.findAll();
+    const ticket = tickets.find(item => item.qrCode === qrPayload);
+
+    if (!ticket) {
+      throw new AppError('Mã QR không hợp lệ', 400);
+    }
+
+    return ticket;
   }
 
   async toCheckInRecord({ ticket, status, message, scannedAt, staff }) {

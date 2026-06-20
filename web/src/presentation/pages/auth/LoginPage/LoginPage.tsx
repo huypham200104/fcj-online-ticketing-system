@@ -141,7 +141,7 @@ export const LoginPage: React.FC = () => {
               <span className="login-page__checkbox-mark" />
               <span>Ghi nhớ đăng nhập</span>
             </label>
-            <Link to="#" className="login-page__forgot">
+            <Link to={ROUTES.FORGOT_PASSWORD} className="login-page__forgot">
               Quên mật khẩu?
             </Link>
           </div>

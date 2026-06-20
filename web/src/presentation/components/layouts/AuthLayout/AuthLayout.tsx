@@ -1,34 +1,26 @@
 import React from 'react';
 import brandLogo from '@/assets/logo/logo.png';
+import type { TicketEvent } from '@/domain/entities/Event';
+import { useHomeFeed } from '@/presentation/hooks/useHomeFeed';
+import { formatCurrency } from '@/shared/utils/formatCurrency';
 import './AuthLayout.css';
 
 interface AuthLayoutProps {
   children: React.ReactNode;
 }
 
-const cinemaHighlights = [
-  {
-    tag: 'Ưu đãi rạp',
-    title: 'Thứ Ba từ 59K',
-    description: 'Áp dụng cho suất chiếu trước 18:00',
-    tone: 'promo',
-  },
-  {
-    tag: 'Phim hot',
-    title: 'Dune: Part Three',
-    description: 'Đặt vé IMAX, chọn ghế trung tâm',
-    tone: 'movie',
-  },
-  {
-    tag: 'Combo',
-    title: 'Bắp nước tiết kiệm',
-    description: 'Thêm combo ngay khi checkout',
-    tone: 'combo',
-  },
-];
+function getRemainingTickets(event: TicketEvent): number {
+  return event.ticketTypes.reduce((sum, ticketType) => sum + ticketType.remainingStock, 0);
+}
+
+function getPriceLabel(event: TicketEvent): string {
+  return event.priceFrom === 0 ? 'Miễn phí' : `Từ ${formatCurrency(event.priceFrom)}`;
+}
 
 export const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
-  const bannerItems = [...cinemaHighlights, ...cinemaHighlights];
+  const { data, loading, error } = useHomeFeed();
+  const events = data?.events.slice(0, 6) ?? [];
+  const bannerItems = events.length ? [...events, ...events] : [];
 
   return (
     <div className="auth-layout">
@@ -50,18 +42,34 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
         </div>
 
         <div className="auth-layout__banners">
-          <div className="banner-track">
-            {bannerItems.map((item, index) => (
-              <div className={`banner-item banner-item--${item.tone}`} key={`${item.title}-${index}`}>
-                <div className="banner-bg-shape" />
-                <div className="banner-content">
-                  <span className="banner-tag">{item.tag}</span>
-                  <h4>{item.title}</h4>
-                  <p>{item.description}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+          {(loading || error || bannerItems.length === 0) && bannerItems.length === 0 ? (
+            <div className="auth-event-card auth-event-card--loading">
+              <span />
+              <strong>{error ? 'Chưa tải được sự kiện' : 'Đang tải sự kiện từ backend'}</strong>
+              <small>{error ? 'Kiểm tra backend để hiển thị phim và concert đang mở bán.' : 'Banner sẽ dùng dữ liệu phim và concert đang mở bán.'}</small>
+            </div>
+          ) : (
+            <div className="banner-track">
+              {bannerItems.map((event, index) => (
+                <article className="auth-event-card" key={`${event.id}-${index}`}>
+                  {event.posterUrl ? <img src={event.posterUrl} alt="" /> : null}
+                  <div className="auth-event-card__shade" />
+                  <div className="auth-event-card__content">
+                    <div className="auth-event-card__meta">
+                      <span>{event.category}</span>
+                      <span>{event.dateLabel}</span>
+                    </div>
+                    <h4>{event.title}</h4>
+                    <p>{event.venue.name}</p>
+                    <div className="auth-event-card__footer">
+                      <strong>{getPriceLabel(event)}</strong>
+                      <span>{getRemainingTickets(event)} vé còn lại</span>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="auth-layout__tagline">

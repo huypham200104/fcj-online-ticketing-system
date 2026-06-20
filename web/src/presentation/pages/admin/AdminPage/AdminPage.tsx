@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ApiAdminService,
+  type AdminAuditLog,
   type AdminEvent,
   type AdminEventStatus,
   type AdminOrder,
@@ -15,6 +16,7 @@ import {
   type AdminUserStatus,
   type AdminVenue,
   type CreateAdminEventPayload,
+  type CreateAdminUserPayload,
 } from '@/infrastructure/admin/ApiAdminService';
 import { getAuthSession } from '@/infrastructure/api/authSession';
 import { AccountMenu } from '@/presentation/components/shared/AccountMenu';
@@ -23,7 +25,7 @@ import './AdminPage.css';
 
 const adminService = new ApiAdminService();
 
-type AdminTab = 'overview' | 'events' | 'venues' | 'showtimes' | 'orders' | 'users' | 'reports' | 'system';
+type AdminTab = 'overview' | 'events' | 'venues' | 'showtimes' | 'orders' | 'users' | 'reports' | 'audit' | 'system';
 
 const tabs: Array<{ key: AdminTab; label: string }> = [
   { key: 'overview', label: 'Tổng quan' },
@@ -33,6 +35,7 @@ const tabs: Array<{ key: AdminTab; label: string }> = [
   { key: 'orders', label: 'Đơn hàng' },
   { key: 'users', label: 'Người dùng' },
   { key: 'reports', label: 'Báo cáo' },
+  { key: 'audit', label: 'Audit log' },
   { key: 'system', label: 'Hệ thống' },
 ];
 
@@ -113,6 +116,15 @@ const initialEventForm: CreateAdminEventPayload = {
   priceFrom: 120000,
 };
 
+const initialUserForm: CreateAdminUserPayload = {
+  name: '',
+  email: '',
+  password: '',
+  role: 'staff',
+  status: 'active',
+  avatarUrl: '',
+};
+
 export const AdminPage: React.FC = () => {
   const navigate = useNavigate();
   const [session] = useState(() => getAuthSession());
@@ -128,6 +140,7 @@ export const AdminPage: React.FC = () => {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [reports, setReports] = useState<AdminReports | null>(null);
   const [system, setSystem] = useState<AdminSystemStatus | null>(null);
+  const [auditLogs, setAuditLogs] = useState<AdminAuditLog[]>([]);
   const [eventForm, setEventForm] = useState<CreateAdminEventPayload>(initialEventForm);
   const [eventPage, setEventPage] = useState(1);
   const [venuePage, setVenuePage] = useState(1);
@@ -145,6 +158,8 @@ export const AdminPage: React.FC = () => {
     basePrice: 120000,
   });
   const [orderFilter, setOrderFilter] = useState({ q: '', status: '' });
+  const [userForm, setUserForm] = useState<CreateAdminUserPayload>(initialUserForm);
+  const [resetPasswordForm, setResetPasswordForm] = useState({ userId: '', password: '' });
 
   const rooms = useMemo(() => venues.flatMap((venue) => venue.rooms.map((room) => ({ ...room, venueName: venue.name }))), [venues]);
   const eventTotalPages = useMemo(() => Math.max(Math.ceil(events.length / EVENT_PAGE_SIZE), 1), [events.length]);
@@ -177,7 +192,7 @@ export const AdminPage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const [overviewData, eventData, venueData, showTimeData, orderData, userData, reportData, systemData] =
+      const [overviewData, eventData, venueData, showTimeData, orderData, userData, reportData, systemData, auditData] =
         await Promise.all([
           adminService.getOverview(),
           adminService.getEvents(),
@@ -187,6 +202,7 @@ export const AdminPage: React.FC = () => {
           adminService.getUsers(),
           adminService.getReports(),
           adminService.getSystemStatus(),
+          adminService.getAuditLogs(),
         ]);
 
       setOverview(overviewData);
@@ -197,6 +213,7 @@ export const AdminPage: React.FC = () => {
       setUsers(userData);
       setReports(reportData);
       setSystem(systemData);
+      setAuditLogs(auditData);
       setRoomForm((prev) => ({ ...prev, venueId: prev.venueId || venueData[0]?.id || '' }));
       setShowTimeForm((prev) => ({
         ...prev,
@@ -239,6 +256,7 @@ export const AdminPage: React.FC = () => {
     setError(null);
     try {
       await action();
+      setAuditLogs(await adminService.getAuditLogs());
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Thao tác thất bại.');
     } finally {
@@ -340,11 +358,31 @@ export const AdminPage: React.FC = () => {
 
   const handleUserUpdate = (user: AdminUser, updates: { role?: AdminUserRole; status?: AdminUserStatus }) => {
     void runAction(async () => {
-      const updated = await adminService.updateUser(user.id, {
+      const updated = await adminService.updateUserProfile(user.id, {
         role: updates.role ?? user.role,
         status: updates.status ?? user.status,
       });
       setUsers((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
+    });
+  };
+
+  const handleCreateUser = (event: React.FormEvent) => {
+    event.preventDefault();
+    void runAction(async () => {
+      const created = await adminService.createUser(userForm);
+      setUsers((prev) => [created, ...prev]);
+      setUserForm(initialUserForm);
+      setUserPage(1);
+      setOverview(await adminService.getOverview());
+    });
+  };
+
+  const handleResetUserPassword = (event: React.FormEvent) => {
+    event.preventDefault();
+    void runAction(async () => {
+      if (!resetPasswordForm.userId) throw new Error('Chọn tài khoản cần reset mật khẩu.');
+      await adminService.resetUserPassword(resetPasswordForm.userId, resetPasswordForm.password);
+      setResetPasswordForm({ userId: '', password: '' });
     });
   };
 
@@ -823,6 +861,61 @@ export const AdminPage: React.FC = () => {
         ) : null}
 
         {!loading && activeTab === 'users' ? (
+          <section className="admin-stack">
+          <DataPanel title="Tạo tài khoản nhân viên / người dùng">
+            <form className="admin-form admin-form--grid" onSubmit={handleCreateUser}>
+              <label className="admin-field">
+                <span>Tên hiển thị</span>
+                <input value={userForm.name} onChange={(e) => setUserForm((prev) => ({ ...prev, name: e.target.value }))} required />
+              </label>
+              <label className="admin-field">
+                <span>Email</span>
+                <input type="email" value={userForm.email} onChange={(e) => setUserForm((prev) => ({ ...prev, email: e.target.value }))} required />
+              </label>
+              <label className="admin-field">
+                <span>Mật khẩu tạm</span>
+                <input type="password" minLength={8} value={userForm.password} onChange={(e) => setUserForm((prev) => ({ ...prev, password: e.target.value }))} required />
+              </label>
+              <label className="admin-field">
+                <span>Role</span>
+                <select value={userForm.role} onChange={(e) => setUserForm((prev) => ({ ...prev, role: e.target.value as AdminUserRole }))}>
+                  <option value="staff">Staff</option>
+                  <option value="customer">Customer</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </label>
+              <label className="admin-field">
+                <span>Trạng thái</span>
+                <select value={userForm.status} onChange={(e) => setUserForm((prev) => ({ ...prev, status: e.target.value as AdminUserStatus }))}>
+                  <option value="active">Active</option>
+                  <option value="locked">Locked</option>
+                </select>
+              </label>
+              <label className="admin-field">
+                <span>Avatar URL</span>
+                <input value={userForm.avatarUrl ?? ''} onChange={(e) => setUserForm((prev) => ({ ...prev, avatarUrl: e.target.value }))} placeholder="https://..." />
+              </label>
+              <button type="submit" disabled={actionLoading}>Tạo tài khoản</button>
+            </form>
+          </DataPanel>
+
+          <DataPanel title="Reset mật khẩu">
+            <form className="admin-form admin-form--grid" onSubmit={handleResetUserPassword}>
+              <label className="admin-field">
+                <span>Tài khoản</span>
+                <select value={resetPasswordForm.userId} onChange={(e) => setResetPasswordForm((prev) => ({ ...prev, userId: e.target.value }))}>
+                  <option value="">Chọn tài khoản</option>
+                  {users.map((user) => <option key={user.id} value={user.id}>{user.name} · {user.email}</option>)}
+                </select>
+              </label>
+              <label className="admin-field">
+                <span>Mật khẩu mới</span>
+                <input type="password" minLength={8} value={resetPasswordForm.password} onChange={(e) => setResetPasswordForm((prev) => ({ ...prev, password: e.target.value }))} required />
+              </label>
+              <button type="submit" disabled={actionLoading}>Reset mật khẩu</button>
+            </form>
+          </DataPanel>
+
           <DataPanel title="Quản lý người dùng và phân quyền">
             {users.length ? (
               <div className="admin-table-meta">
@@ -886,6 +979,7 @@ export const AdminPage: React.FC = () => {
               onPageChange={setUserPage}
             />
           </DataPanel>
+          </section>
         ) : null}
 
         {!loading && activeTab === 'reports' && reports ? (
@@ -904,6 +998,47 @@ export const AdminPage: React.FC = () => {
                 <BarList items={reports.occupancy.map((item) => ({ label: item.eventName, value: item.occupancyRate, display: `${item.occupancyRate}%` }))} max={100} />
               </DataPanel>
             </div>
+          </section>
+        ) : null}
+
+        {!loading && activeTab === 'audit' ? (
+          <section className="admin-stack">
+            <DataPanel title="Audit log" description="Theo dõi các thao tác quản trị và soát vé gần nhất trong phiên mock hiện tại.">
+              {auditLogs.length === 0 ? (
+                <p className="admin-empty">Chưa có log thao tác.</p>
+              ) : (
+                <div className="admin-table-scroll">
+                  <table className="admin-table admin-table--audit">
+                    <thead>
+                      <tr>
+                        <th>Thời gian</th>
+                        <th>Người thực hiện</th>
+                        <th>Hành động</th>
+                        <th>Đối tượng</th>
+                        <th>Nội dung</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {auditLogs.map((log) => (
+                        <tr key={log.id}>
+                          <td>{formatDateTime(log.createdAt)}</td>
+                          <td>
+                            <strong>{log.actor.name}</strong>
+                            <span>{log.actor.email || log.actor.id}</span>
+                          </td>
+                          <td><code className="admin-audit-action">{log.action}</code></td>
+                          <td>
+                            <strong>{log.entityType}</strong>
+                            <span>{log.entityId || 'N/A'}</span>
+                          </td>
+                          <td>{log.message}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </DataPanel>
           </section>
         ) : null}
 

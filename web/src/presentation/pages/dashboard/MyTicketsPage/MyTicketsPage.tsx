@@ -54,7 +54,10 @@ export const MyTicketsPage: React.FC = () => {
           <h1>Vé của tôi</h1>
           <p>Quản lý vé xem phim, concert và mở QR Code để vào rạp hoặc soát vé tại cổng.</p>
         </div>
-        <Link to={ROUTES.EVENTS}>Mua thêm vé</Link>
+        <div className="my-tickets__heading-actions">
+          <Link to={ROUTES.ORDER_HISTORY}>Xem đơn hàng</Link>
+          <Link to={ROUTES.EVENTS}>Mua thêm vé</Link>
+        </div>
       </section>
 
       {tickets.length === 0 ? (

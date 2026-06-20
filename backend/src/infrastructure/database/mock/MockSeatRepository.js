@@ -62,8 +62,62 @@ const mockSeats = [
   ...stageRooms.flatMap(generateStageSeats)
 ];
 
+const seatLocksByShowTime = new Map();
+const soldSeatKeys = new Set();
+
+function stateKey(showTimeId, seatId) {
+  return `${showTimeId}:${seatId}`;
+}
+
 export class MockSeatRepository {
   async getSeatsByRoomId(roomId) {
     return mockSeats.filter(s => s.roomId === roomId);
+  }
+
+  async getSeatsForShowTime(showTimeId, roomId) {
+    const seats = roomId ? await this.getSeatsByRoomId(roomId) : mockSeats;
+
+    return seats.map(seat => {
+      const key = stateKey(showTimeId, seat.id);
+      const status = soldSeatKeys.has(key)
+        ? 'sold'
+        : seatLocksByShowTime.has(key)
+          ? 'locked'
+          : seat.status === 'sold'
+            ? 'sold'
+            : 'available';
+
+      return new Seat({ ...seat, status });
+    });
+  }
+
+  async lockSeatsForSession({ showTimeId, seatIds, sessionId }) {
+    for (const seatId of seatIds) {
+      seatLocksByShowTime.set(stateKey(showTimeId, seatId), { sessionId });
+    }
+  }
+
+  async releaseSeatsForSession(sessionId) {
+    for (const [key, lock] of seatLocksByShowTime.entries()) {
+      if (lock.sessionId === sessionId) {
+        seatLocksByShowTime.delete(key);
+      }
+    }
+  }
+
+  async markSeatsSold(showTimeId, seatIds) {
+    for (const seatId of seatIds) {
+      const key = stateKey(showTimeId, seatId);
+      seatLocksByShowTime.delete(key);
+      soldSeatKeys.add(key);
+    }
+  }
+
+  async syncLocksForShowTime(showTimeId, activeSessionIds) {
+    for (const [key, lock] of seatLocksByShowTime.entries()) {
+      if (key.startsWith(`${showTimeId}:`) && !activeSessionIds.has(lock.sessionId)) {
+        seatLocksByShowTime.delete(key);
+      }
+    }
   }
 }

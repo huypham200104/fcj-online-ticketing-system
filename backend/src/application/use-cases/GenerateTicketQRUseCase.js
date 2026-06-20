@@ -1,5 +1,5 @@
 import { AppError, NotFoundError } from '../../domain/errors/AppError.js';
-import crypto from 'crypto';
+import { createTicketQrPayload } from '../../infrastructure/security/ticketQrToken.js';
 
 export class GenerateTicketQRUseCase {
   constructor(ticketRepository) {
@@ -21,8 +21,7 @@ export class GenerateTicketQRUseCase {
       return ticket.qrCode;
     }
 
-    // Generate a simple hash/payload as QR string
-    const qrPayload = crypto.createHash('sha256').update(`${ticket.id}-${ticket.userId}`).digest('hex');
+    const qrPayload = createTicketQrPayload(ticket.id, ticket.userId);
     
     ticket.qrCode = qrPayload;
     await this.ticketRepository.save(ticket);

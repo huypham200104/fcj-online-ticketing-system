@@ -1,9 +1,10 @@
 import { NotFoundError } from '../../domain/errors/AppError.js';
 
 export class GetShowTimeSeatsUseCase {
-  constructor(showTimeRepository, seatRepository) {
+  constructor(showTimeRepository, seatRepository, bookingRepository) {
     this.showTimeRepository = showTimeRepository;
     this.seatRepository = seatRepository;
+    this.bookingRepository = bookingRepository;
   }
 
   async execute(showTimeId) {
@@ -12,12 +13,14 @@ export class GetShowTimeSeatsUseCase {
       throw new NotFoundError('ShowTime');
     }
 
-    const seats = await this.seatRepository.getSeatsByRoomId(showTime.roomId);
-    
-    // Trong môi trường production, chỗ này cần lấy thêm thông tin từ BookingSession / Order
-    // để xác định ghế nào đang bị "lock" hoặc đã thanh toán thành công trong suất chiếu cụ thể này.
-    // Hiện tại mock chỉ trả về status mặc định của ghế từ Room.
+    if (this.bookingRepository) {
+      const activeSessions = await this.bookingRepository.findActiveSessionsByShowTime(showTimeId);
+      await this.seatRepository.syncLocksForShowTime(
+        showTimeId,
+        new Set(activeSessions.map(session => session.id))
+      );
+    }
 
-    return seats;
+    return this.seatRepository.getSeatsForShowTime(showTimeId, showTime.roomId);
   }
 }

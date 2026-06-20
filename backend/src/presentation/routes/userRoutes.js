@@ -7,6 +7,8 @@ export function createUserRouter(userController) {
   router.post('/register', userController.register);
   router.post('/login', userController.login);
   router.post('/logout', userController.logout);
+  router.post('/forgot-password', userController.forgotPassword);
+  router.post('/reset-password', userController.resetPassword);
   
   // Protected route
   router.get('/me', authMiddleware, userController.getMe);

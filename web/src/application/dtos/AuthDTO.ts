@@ -14,6 +14,23 @@ export interface RegisterDTO {
   confirmPassword: string;
 }
 
+export interface ForgotPasswordDTO {
+  email: string;
+}
+
+export interface ResetPasswordDTO {
+  token: string;
+  newPassword: string;
+  passwordConfirm: string;
+}
+
+export interface ForgotPasswordResponseDTO {
+  emailSent: boolean;
+  expiresInMinutes: number;
+  resetToken?: string;
+  resetUrl?: string;
+}
+
 export interface AuthResponseDTO {
   accessToken?: string;
   user: {

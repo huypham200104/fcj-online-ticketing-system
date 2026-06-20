@@ -55,9 +55,45 @@ export interface BackendOrder {
   userId: string;
   bookingSessionId: string;
   totalAmount: number;
-  status: 'pending' | 'paid' | 'failed';
+  status: 'pending' | 'paid' | 'failed' | 'cancelled';
   paymentMethod: string;
+  idempotencyKey?: string | null;
   createdAt: string;
+}
+
+export interface BackendCustomerOrderDetail {
+  order: BackendOrder;
+  tickets: BackendTicket[];
+  event: {
+    id: number | string;
+    name: string;
+    type?: string;
+    image?: string;
+    location?: string;
+  } | null;
+  showTime: {
+    id: string;
+    date: string;
+    time: string;
+    format?: string;
+  } | null;
+  venue: {
+    id: string;
+    name: string;
+    address: string;
+    city: string;
+  } | null;
+  room: {
+    id: string;
+    name: string;
+    type: string;
+  } | null;
+  seats: Array<{
+    id: string;
+    label: string;
+    type: string | null;
+    price: number;
+  }>;
 }
 
 export interface BackendTicket {

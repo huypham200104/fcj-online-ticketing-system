@@ -214,4 +214,70 @@ export class GmailTicketEmailService {
       rejected: info.rejected
     };
   }
+
+  async sendPasswordResetEmail({ to, customerName, resetUrl, expiresInMinutes = 15 }) {
+    if (!this.enabled) {
+      return { status: 'skipped', reason: 'mail_disabled' };
+    }
+
+    if (!this.isConfigured()) {
+      return { status: 'skipped', reason: 'mail_not_configured' };
+    }
+
+    const safeName = escapeHtml(customerName || 'ban');
+    const safeResetUrl = escapeHtml(resetUrl);
+    const html = `
+      <!doctype html>
+      <html>
+        <body style="margin: 0; padding: 0; background: #f8fafc; font-family: Arial, sans-serif;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: #f8fafc; padding: 28px 0;">
+            <tr>
+              <td align="center">
+                <table role="presentation" width="560" cellspacing="0" cellpadding="0" style="width: 560px; max-width: 94%; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden;">
+                  <tr>
+                    <td style="padding: 22px 26px; background: #111827; color: #ffffff;">
+                      <p style="margin: 0 0 6px; font-size: 13px; color: #cbd5e1;">Cinematic Pulse</p>
+                      <h1 style="margin: 0; font-size: 22px; line-height: 1.3;">Dat lai mat khau</h1>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 24px 26px; color: #334155; font-size: 15px; line-height: 1.6;">
+                      <p style="margin: 0 0 14px;">Xin chao ${safeName},</p>
+                      <p style="margin: 0 0 18px;">Ban vua yeu cau dat lai mat khau. Link nay co hieu luc trong ${expiresInMinutes} phut.</p>
+                      <p style="margin: 0 0 18px;">
+                        <a href="${safeResetUrl}" style="display: inline-block; padding: 11px 16px; border-radius: 8px; background: #e11d48; color: #ffffff; font-weight: 700; text-decoration: none;">Dat lai mat khau</a>
+                      </p>
+                      <p style="margin: 0; color: #64748b; font-size: 13px;">Neu ban khong yeu cau, hay bo qua email nay.</p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+      </html>
+    `;
+
+    const info = await this.getTransport().sendMail({
+      from: this.from,
+      to,
+      subject: 'Dat lai mat khau Cinematic Pulse',
+      html,
+      text: [
+        `Xin chao ${customerName || 'ban'},`,
+        '',
+        `Mo link sau de dat lai mat khau trong ${expiresInMinutes} phut:`,
+        resetUrl,
+        '',
+        'Neu ban khong yeu cau, hay bo qua email nay.'
+      ].join('\n')
+    });
+
+    return {
+      status: 'sent',
+      messageId: info.messageId,
+      accepted: info.accepted,
+      rejected: info.rejected
+    };
+  }
 }

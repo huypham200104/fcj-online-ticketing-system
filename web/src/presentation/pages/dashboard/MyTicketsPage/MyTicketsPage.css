@@ -23,6 +23,19 @@
   color: var(--color-text-secondary);
 }
 
+.my-tickets__heading-actions,
+.my-tickets__heading > a,
+.my-tickets__state-button,
+.my-ticket-card > a {
+  display: inline-flex;
+}
+
+.my-tickets__heading-actions {
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.my-tickets__heading-actions a,
 .my-tickets__heading > a,
 .my-tickets__state-button,
 .my-ticket-card > a {

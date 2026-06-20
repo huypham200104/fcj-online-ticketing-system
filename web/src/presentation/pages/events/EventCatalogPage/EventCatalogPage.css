@@ -75,6 +75,75 @@
   color: var(--color-text-inverse);
 }
 
+.catalog-filter-panel {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.4fr) repeat(4, minmax(140px, 1fr)) auto;
+  gap: 12px;
+  align-items: end;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.catalog-filter-panel label {
+  display: grid;
+  gap: 7px;
+}
+
+.catalog-filter-panel label span {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.catalog-filter-panel input,
+.catalog-filter-panel select {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xs);
+  background: var(--color-bg-base);
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: 14px;
+  padding: 8px 11px;
+  outline: none;
+}
+
+.catalog-filter-panel input:focus,
+.catalog-filter-panel select:focus {
+  border-color: var(--color-border-focus);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary-500) 16%, transparent);
+}
+
+.catalog-filter-panel__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.catalog-filter-panel__actions button {
+  min-height: 42px;
+  border: 1px solid var(--color-primary-500);
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 900;
+  padding: 8px 13px;
+}
+
+.catalog-filter-panel__actions button:first-child {
+  background: var(--color-primary-500);
+  color: var(--color-text-inverse);
+}
+
+.catalog-filter-panel__actions button:last-child {
+  background: var(--color-bg-base);
+  color: var(--color-primary-700);
+}
+
 .catalog-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -240,6 +309,14 @@
 }
 
 @media (max-width: 1080px) {
+  .catalog-filter-panel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .catalog-filter-panel__actions {
+    grid-column: 1 / -1;
+  }
+
   .catalog-grid,
   .catalog-grid--movies {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -249,6 +326,14 @@
 @media (max-width: 680px) {
   .catalog-page__heading {
     align-items: stretch;
+    flex-direction: column;
+  }
+
+  .catalog-filter-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .catalog-filter-panel__actions {
     flex-direction: column;
   }
 

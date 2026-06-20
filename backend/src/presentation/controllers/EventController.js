@@ -13,21 +13,37 @@ export class EventController {
   async getAllEvents(req, res, next) {
     try {
       const events = await this.getEventsUseCase.execute();
-      const hasCatalogQuery = Boolean(req.query.type || req.query.page || req.query.pageSize || req.query.q || req.query.city);
+      const hasCatalogQuery = Boolean(
+        req.query.type ||
+        req.query.page ||
+        req.query.pageSize ||
+        req.query.q ||
+        req.query.city ||
+        req.query.date ||
+        req.query.format ||
+        req.query.maxPrice
+      );
 
       if (hasCatalogQuery) {
         const type = String(req.query.type ?? '').toLowerCase();
         const q = String(req.query.q ?? '').trim().toLowerCase();
         const city = String(req.query.city ?? '').trim().toLowerCase();
+        const date = String(req.query.date ?? '').trim();
+        const format = String(req.query.format ?? '').trim().toLowerCase();
+        const maxPrice = Number(req.query.maxPrice ?? 0);
         const page = Math.max(Number.parseInt(req.query.page ?? '1', 10) || 1, 1);
         const pageSize = Math.min(Math.max(Number.parseInt(req.query.pageSize ?? '12', 10) || 12, 1), 48);
 
         const filtered = events.filter((event) => {
           const matchesType = !type || event.type === type;
           const searchable = `${event.name} ${event.description} ${event.location}`.toLowerCase();
+          const ticketText = event.ticketTypes.map(ticketType => ticketType.name).join(' ').toLowerCase();
           const matchesQuery = !q || searchable.includes(q);
           const matchesCity = !city || event.location.toLowerCase().includes(city);
-          return matchesType && matchesQuery && matchesCity;
+          const matchesDate = !date || event.date === date;
+          const matchesFormat = !format || ticketText.includes(format);
+          const matchesPrice = !maxPrice || event.ticketTypes.some(ticketType => Number(ticketType.price) <= maxPrice);
+          return matchesType && matchesQuery && matchesCity && matchesDate && matchesFormat && matchesPrice;
         });
         const total = filtered.length;
         const totalPages = Math.max(Math.ceil(total / pageSize), 1);

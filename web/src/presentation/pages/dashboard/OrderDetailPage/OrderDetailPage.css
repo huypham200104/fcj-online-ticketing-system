@@ -1,0 +1,117 @@
+.order-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.order-detail__heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.order-detail__heading h1 {
+  margin-top: 12px;
+  font-size: clamp(32px, 5vw, 52px);
+}
+
+.order-detail__heading p {
+  margin-top: 8px;
+  color: var(--color-text-secondary);
+  font-weight: 800;
+}
+
+.order-detail__heading > a,
+.order-detail__button {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  background: var(--gradient-primary);
+  color: var(--color-text-inverse);
+  font-weight: 900;
+  padding: 8px 14px;
+}
+
+.order-detail__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+  gap: 16px;
+}
+
+.order-detail__panel {
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.order-detail__panel h2 {
+  font-size: 20px;
+}
+
+.order-detail__panel dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.order-detail__panel dt {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.order-detail__panel dd {
+  overflow-wrap: anywhere;
+  color: var(--color-text-primary);
+  font-weight: 850;
+}
+
+.order-detail__tickets {
+  display: grid;
+  gap: 10px;
+}
+
+.order-detail__tickets a {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-subtle);
+}
+
+.order-detail__tickets strong {
+  font-family: monospace;
+}
+
+.order-detail__tickets span {
+  color: var(--color-text-secondary);
+  font-weight: 850;
+}
+
+@media (max-width: 820px) {
+  .order-detail__heading,
+  .order-detail__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .order-detail__heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .order-detail__panel dl {
+    grid-template-columns: 1fr;
+  }
+}

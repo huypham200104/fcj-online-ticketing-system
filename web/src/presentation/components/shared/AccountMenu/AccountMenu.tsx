@@ -74,6 +74,8 @@ export const AccountMenu: React.FC<AccountMenuProps> = ({ initialSession, onBefo
 
   if (!session) return null;
 
+  const canEditOwnAccount = session.user.role !== 'staff';
+
   const handleLogout = async () => {
     onBeforeLogout?.();
     await logout();
@@ -154,14 +156,22 @@ export const AccountMenu: React.FC<AccountMenuProps> = ({ initialSession, onBefo
           </div>
 
           <div className="account-menu__cards">
-            <button type="button" className={activePanel === 'profile' ? 'account-menu__card account-menu__card--active' : 'account-menu__card'} onClick={() => setActivePanel('profile')}>
-              <strong>Thông tin cá nhân</strong>
-              <span>Cập nhật tên hiển thị và avatar</span>
-            </button>
-            <button type="button" className={activePanel === 'password' ? 'account-menu__card account-menu__card--active' : 'account-menu__card'} onClick={() => setActivePanel('password')}>
-              <strong>Đổi mật khẩu</strong>
-              <span>Bảo vệ tài khoản đăng nhập</span>
-            </button>
+            {canEditOwnAccount ? (
+              <>
+                <button type="button" className={activePanel === 'profile' ? 'account-menu__card account-menu__card--active' : 'account-menu__card'} onClick={() => setActivePanel('profile')}>
+                  <strong>Thông tin cá nhân</strong>
+                  <span>Cập nhật tên hiển thị và avatar</span>
+                </button>
+                <button type="button" className={activePanel === 'password' ? 'account-menu__card account-menu__card--active' : 'account-menu__card'} onClick={() => setActivePanel('password')}>
+                  <strong>Đổi mật khẩu</strong>
+                  <span>Bảo vệ tài khoản đăng nhập</span>
+                </button>
+              </>
+            ) : (
+              <div className="account-menu__notice">
+                Tài khoản nhân viên do quản trị viên quản lý.
+              </div>
+            )}
             <button type="button" className="account-menu__card account-menu__card--danger" onClick={() => void handleLogout()}>
               <strong>Đăng xuất</strong>
               <span>Thoát khỏi phiên hiện tại</span>
@@ -170,7 +180,7 @@ export const AccountMenu: React.FC<AccountMenuProps> = ({ initialSession, onBefo
 
           {accountError ? <p className="account-menu__alert" role="alert">{accountError}</p> : null}
 
-          {activePanel === 'profile' ? (
+          {canEditOwnAccount && activePanel === 'profile' ? (
             <form className="account-menu__form" onSubmit={handleProfileSubmit}>
               <label>
                 <span>Tên hiển thị</span>
@@ -185,7 +195,7 @@ export const AccountMenu: React.FC<AccountMenuProps> = ({ initialSession, onBefo
             </form>
           ) : null}
 
-          {activePanel === 'password' ? (
+          {canEditOwnAccount && activePanel === 'password' ? (
             <form className="account-menu__form" onSubmit={handlePasswordSubmit}>
               <label>
                 <span>Mật khẩu hiện tại</span>

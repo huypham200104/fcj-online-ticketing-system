@@ -4,7 +4,7 @@ import { ROUTES } from '@/presentation/router/routes';
 import { AccountMenu } from '@/presentation/components/shared/AccountMenu';
 import { Button } from '@/presentation/components/ui/Button';
 import { getAuthSession } from '@/infrastructure/api/authSession';
-import { ApiCheckInService, type CheckInTicketResult } from '@/infrastructure/tickets/ApiCheckInService';
+import { ApiCheckInService, type CheckInShowTimeOption, type CheckInTicketResult } from '@/infrastructure/tickets/ApiCheckInService';
 import './CheckInPage.css';
 
 const checkInService = new ApiCheckInService();
@@ -24,6 +24,8 @@ interface NativeBarcodeDetectorConstructor {
 type BarcodeDetectorWindow = Window & typeof globalThis & {
   BarcodeDetector?: NativeBarcodeDetectorConstructor;
 };
+
+type StaffPanel = 'scan' | 'result' | 'history' | 'stats';
 
 const QrIcon = () => (
   <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -126,9 +128,12 @@ export const CheckInPage: React.FC = () => {
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [scannerStatus, setScannerStatus] = useState<'idle' | 'ready' | 'processing'>('idle');
+  const [activePanel, setActivePanel] = useState<StaffPanel>('scan');
   const [pageError, setPageError] = useState<string | null>(null);
   const [scannedTicket, setScannedTicket] = useState<CheckInTicketResult | null>(null);
   const [history, setHistory] = useState<CheckInTicketResult[]>([]);
+  const [checkInShowTimes, setCheckInShowTimes] = useState<CheckInShowTimeOption[]>([]);
+  const [selectedShowTimeId, setSelectedShowTimeId] = useState('');
 
   const loadHistory = useCallback(async () => {
     setHistoryLoading(true);
@@ -141,6 +146,15 @@ export const CheckInPage: React.FC = () => {
       setPageError(err instanceof Error ? err.message : 'Không thể tải lịch sử check-in.');
     } finally {
       setHistoryLoading(false);
+    }
+  }, []);
+
+  const loadCheckInShowTimes = useCallback(async () => {
+    try {
+      const options = await checkInService.listCheckInShowTimes();
+      setCheckInShowTimes(options);
+    } catch (err) {
+      setPageError(err instanceof Error ? err.message : 'Không thể tải danh sách điểm check-in.');
     }
   }, []);
 
@@ -173,14 +187,18 @@ export const CheckInPage: React.FC = () => {
     setPageError(null);
 
     try {
-      const result = await checkInService.checkIn(value);
+      const result = await checkInService.checkIn(value, selectedShowTimeId);
       setScannedTicket(result);
       if (source === 'manual') setManualValue('');
       setHistory((prev) => [result, ...prev.filter((item) => item.id !== result.id)].slice(0, 75));
+      stopCamera();
+      setActivePanel('result');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Không thể check-in vé.';
       const localFailure = createLocalFailure(message, staffName);
       setScannedTicket(localFailure);
+      stopCamera();
+      setActivePanel('result');
 
       if (message.includes('định dạng')) {
         setHistory((prev) => [localFailure, ...prev].slice(0, 75));
@@ -194,7 +212,41 @@ export const CheckInPage: React.FC = () => {
         setScannerStatus(streamRef.current ? 'ready' : 'idle');
       }, 1200);
     }
-  }, [loadHistory, staffName]);
+  }, [loadHistory, selectedShowTimeId, staffName, stopCamera]);
+
+  const processImageUpload = useCallback(async (file: File) => {
+    if (!file || scanLockedRef.current) return;
+
+    scanLockedRef.current = true;
+    setLoading(true);
+    setScannerStatus('processing');
+    setScannedTicket(null);
+    setPageError(null);
+
+    try {
+      const result = await checkInService.checkInImage(file, selectedShowTimeId);
+      setScannedTicket(result);
+      setHistory((prev) => [result, ...prev.filter((item) => item.id !== result.id)].slice(0, 75));
+      setActivePanel('result');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Không thể check-in vé.';
+      const localFailure = createLocalFailure(message, staffName);
+      setScannedTicket(localFailure);
+      setActivePanel('result');
+
+      if (message.includes('định dạng') || message.includes('Không thể đọc')) {
+        setHistory((prev) => [localFailure, ...prev].slice(0, 75));
+      } else {
+        void loadHistory();
+      }
+    } finally {
+      setLoading(false);
+      window.setTimeout(() => {
+        scanLockedRef.current = false;
+        setScannerStatus(streamRef.current ? 'ready' : 'idle');
+      }, 1200);
+    }
+  }, [loadHistory, selectedShowTimeId, staffName]);
 
   const startCamera = useCallback(async () => {
     const BarcodeDetector = getBarcodeDetector();
@@ -271,10 +323,11 @@ export const CheckInPage: React.FC = () => {
 
     const loadTimer = window.setTimeout(() => {
       void loadHistory();
+      void loadCheckInShowTimes();
     }, 0);
 
     return () => window.clearTimeout(loadTimer);
-  }, [loadHistory, navigate, roleAllowed, session]);
+  }, [loadCheckInShowTimes, loadHistory, navigate, roleAllowed, session]);
 
   useEffect(() => stopCamera, [stopCamera]);
 
@@ -297,16 +350,37 @@ export const CheckInPage: React.FC = () => {
     void processQrValue(manualValue, 'manual');
   };
 
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      void processImageUpload(file);
+      event.target.value = '';
+    }
+  };
+
+  const handlePanelChange = (panel: StaffPanel) => {
+    if (panel !== 'scan') stopCamera();
+    setActivePanel(panel);
+  };
+
   const handleReset = () => {
     setScannedTicket(null);
     setManualValue('');
     lastScannedValueRef.current = '';
+    setActivePanel('scan');
   };
 
   if (!session || !roleAllowed) return null;
 
   const resultTicket = scannedTicket?.ticket;
   const resultIsSuccess = scannedTicket?.status === 'success';
+  const activePanelTitle = activePanel === 'scan'
+    ? 'Quét QR vé khách'
+    : activePanel === 'result'
+      ? 'Kết quả quét'
+      : activePanel === 'history'
+        ? 'Lịch sử ca làm việc'
+        : 'Thống kê ca làm việc';
 
   return (
     <div className="checkin-page">
@@ -321,43 +395,48 @@ export const CheckInPage: React.FC = () => {
       </header>
 
       <main className="checkin-main">
-        <section className="checkin-summary" aria-label="Thống kê ca làm việc">
-          <article className="checkin-stat-card">
-            <span className="checkin-stat-card__icon">
-              <QrIcon />
-            </span>
-            <div>
-              <strong>{stats.total}</strong>
-              <span>QR đã quét · gần nhất {formatTime(stats.lastScan)}</span>
-            </div>
-          </article>
-          <article className="checkin-stat-card">
-            <span className="checkin-stat-card__icon checkin-stat-card__icon--success">
-              <ShieldIcon />
-            </span>
-            <div>
-              <strong>{stats.success}</strong>
-              <span>QR hợp lệ</span>
-            </div>
-          </article>
-          <article className="checkin-stat-card">
-            <span className="checkin-stat-card__icon checkin-stat-card__icon--danger">
-              <AlertIcon />
-            </span>
-            <div>
-              <strong>{stats.failed}</strong>
-              <span>QR không hợp lệ</span>
-            </div>
-          </article>
-          <article className="checkin-stat-card">
-            <span className="checkin-stat-card__icon">
-              <ClockIcon />
-            </span>
-            <div>
-              <strong>{stats.successRate}%</strong>
-              <span>Tỷ lệ hợp lệ</span>
-            </div>
-          </article>
+        <section className="checkin-command-center" aria-label="Chức năng soát vé">
+          <div className="checkin-command-center__copy">
+            <span className="checkin-command-center__eyebrow">Chức năng chính</span>
+            <h2>{activePanelTitle}</h2>
+          </div>
+
+          <nav className="checkin-tabs" aria-label="Danh mục chức năng staff">
+            <button
+              type="button"
+              className={`checkin-tab ${activePanel === 'scan' ? 'checkin-tab--active' : ''}`}
+              onClick={() => handlePanelChange('scan')}
+            >
+              <span><QrIcon /></span>
+              Quét QR
+            </button>
+            <button
+              type="button"
+              className={`checkin-tab ${activePanel === 'result' ? 'checkin-tab--active' : ''}`}
+              onClick={() => handlePanelChange('result')}
+            >
+              <span><ShieldIcon /></span>
+              Kết quả
+              {scannedTicket ? <strong>{scannedTicket.status === 'success' ? 'OK' : '!'}</strong> : null}
+            </button>
+            <button
+              type="button"
+              className={`checkin-tab ${activePanel === 'history' ? 'checkin-tab--active' : ''}`}
+              onClick={() => handlePanelChange('history')}
+            >
+              <span><ClockIcon /></span>
+              Lịch sử
+              <strong>{history.length}</strong>
+            </button>
+            <button
+              type="button"
+              className={`checkin-tab ${activePanel === 'stats' ? 'checkin-tab--active' : ''}`}
+              onClick={() => handlePanelChange('stats')}
+            >
+              <span><AlertIcon /></span>
+              Thống kê
+            </button>
+          </nav>
         </section>
 
         {pageError ? (
@@ -367,6 +446,7 @@ export const CheckInPage: React.FC = () => {
         ) : null}
 
         <section className="checkin-workspace">
+          {activePanel === 'scan' ? (
           <section className="checkin-section checkin-scanner-section">
             <div className="checkin-section__title">
               <span>
@@ -374,6 +454,18 @@ export const CheckInPage: React.FC = () => {
               </span>
               <h2>Quét QR vé khách</h2>
             </div>
+
+            <label className="checkin-showtime-select">
+              <span>Điểm check-in</span>
+              <select value={selectedShowTimeId} onChange={(event) => setSelectedShowTimeId(event.target.value)}>
+                <option value="">Không ràng buộc suất chiếu</option>
+                {checkInShowTimes.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.eventTitle} · {option.venueName} · {option.roomName} · {option.date} {option.time}
+                  </option>
+                ))}
+              </select>
+            </label>
 
             <div className={`camera-scanner ${cameraActive ? 'camera-scanner--active' : ''}`}>
               <video ref={videoRef} muted playsInline aria-label="Camera quét QR vé khách" />
@@ -430,8 +522,24 @@ export const CheckInPage: React.FC = () => {
                 </div>
               </form>
             </details>
-          </section>
 
+            <details className="manual-checkin image-upload-checkin">
+              <summary>Hoặc tải lên ảnh mã QR từ máy tính</summary>
+              <div className="scanner-form">
+                <label htmlFor="qr-image">Chọn ảnh QR</label>
+                <input
+                  type="file"
+                  id="qr-image"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  disabled={loading}
+                />
+              </div>
+            </details>
+          </section>
+          ) : null}
+
+          {activePanel === 'result' ? (
           <section className="checkin-section checkin-details-section">
             <div className="checkin-section__title">
               <span className={resultIsSuccess ? 'checkin-title-icon--success' : undefined}>
@@ -493,11 +601,16 @@ export const CheckInPage: React.FC = () => {
                   <Button variant="secondary" fullWidth onClick={handleReset}>
                     Quét QR tiếp theo
                   </Button>
+                  <Button variant="primary" fullWidth onClick={() => handlePanelChange('history')}>
+                    Xem lịch sử
+                  </Button>
                 </div>
               </article>
             )}
           </section>
+          ) : null}
 
+          {activePanel === 'history' ? (
           <section className="checkin-section checkin-history-section">
             <div className="checkin-section__title checkin-section__title--with-action">
               <div>
@@ -530,6 +643,57 @@ export const CheckInPage: React.FC = () => {
               )}
             </div>
           </section>
+          ) : null}
+
+          {activePanel === 'stats' ? (
+          <section className="checkin-section checkin-stats-section">
+            <div className="checkin-section__title">
+              <span>
+                <AlertIcon />
+              </span>
+              <h2>Thống kê ca làm việc</h2>
+            </div>
+
+            <div className="checkin-summary" aria-label="Thống kê ca làm việc">
+              <article className="checkin-stat-card">
+                <span className="checkin-stat-card__icon">
+                  <QrIcon />
+                </span>
+                <div>
+                  <strong>{stats.total}</strong>
+                  <span>QR đã quét · gần nhất {formatTime(stats.lastScan)}</span>
+                </div>
+              </article>
+              <article className="checkin-stat-card">
+                <span className="checkin-stat-card__icon checkin-stat-card__icon--success">
+                  <ShieldIcon />
+                </span>
+                <div>
+                  <strong>{stats.success}</strong>
+                  <span>QR hợp lệ</span>
+                </div>
+              </article>
+              <article className="checkin-stat-card">
+                <span className="checkin-stat-card__icon checkin-stat-card__icon--danger">
+                  <AlertIcon />
+                </span>
+                <div>
+                  <strong>{stats.failed}</strong>
+                  <span>QR không hợp lệ</span>
+                </div>
+              </article>
+              <article className="checkin-stat-card">
+                <span className="checkin-stat-card__icon">
+                  <ClockIcon />
+                </span>
+                <div>
+                  <strong>{stats.successRate}%</strong>
+                  <span>Tỷ lệ hợp lệ</span>
+                </div>
+              </article>
+            </div>
+          </section>
+          ) : null}
         </section>
       </main>
     </div>

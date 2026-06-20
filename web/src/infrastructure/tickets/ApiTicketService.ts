@@ -1,7 +1,7 @@
 import type { Ticket, TicketStatus } from '@/domain/entities/Ticket';
 import type { ITicketService } from '@/application/ports/ITicketService';
-import { getAuthSession } from '@/infrastructure/api/authSession';
-import { apiRequest } from '@/infrastructure/api/httpClient';
+import { getAuthSession, getAuthToken } from '@/infrastructure/api/authSession';
+import { API_BASE_URL, apiRequest } from '@/infrastructure/api/httpClient';
 import type {
   BackendEvent,
   BackendSeat,
@@ -114,5 +114,28 @@ export class ApiTicketService implements ITicketService {
       ...ticket,
       qrValue: toQrValue(ticket.id, qr.qrCode),
     };
+  }
+
+  async downloadTicket(ticketId: string): Promise<void> {
+    const headers = new Headers();
+    const token = getAuthToken();
+    if (token) headers.set('Authorization', `Bearer ${token}`);
+
+    const response = await fetch(`${API_BASE_URL}/tickets/${ticketId}/download`, {
+      credentials: 'include',
+      headers,
+    });
+
+    if (!response.ok) {
+      throw new Error('Không thể tải vé điện tử.');
+    }
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `ticket-${ticketId.slice(0, 8).toUpperCase()}.svg`;
+    link.click();
+    URL.revokeObjectURL(url);
   }
 }

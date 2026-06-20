@@ -26,6 +26,18 @@ export class MockBookingRepository {
     return cancelledSession;
   }
 
+  async fail(sessionId) {
+    const session = bookingSessionsDB.get(sessionId);
+    if (!session) return null;
+
+    const failedSession = new BookingSession({
+      ...session,
+      status: 'failed'
+    });
+    bookingSessionsDB.set(sessionId, failedSession);
+    return failedSession;
+  }
+
   async findActiveSessionsByShowTime(showTimeId) {
     const activeSessions = [];
     const now = new Date();

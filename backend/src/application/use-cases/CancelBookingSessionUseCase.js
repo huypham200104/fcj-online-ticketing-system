@@ -1,8 +1,9 @@
 import { AppError } from '../../domain/errors/AppError.js';
 
 export class CancelBookingSessionUseCase {
-  constructor(bookingRepository) {
+  constructor(bookingRepository, seatRepository) {
     this.bookingRepository = bookingRepository;
+    this.seatRepository = seatRepository;
   }
 
   async execute({ sessionId, userId }) {
@@ -24,6 +25,8 @@ export class CancelBookingSessionUseCase {
       return session;
     }
 
-    return this.bookingRepository.cancel(sessionId);
+    const cancelled = await this.bookingRepository.cancel(sessionId);
+    await this.seatRepository.releaseSeatsForSession(sessionId);
+    return cancelled;
   }
 }

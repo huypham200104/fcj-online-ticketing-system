@@ -16,6 +16,34 @@ import './CheckoutPage.css';
 const SEAT_HOLD_EXPIRED_MESSAGE = 'Đã hết 15 phút giữ ghế, vui lòng đặt lại.';
 const DEFAULT_HOLD_TIME_LABEL = '15:00';
 
+interface ConcessionItem {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+}
+
+const CONCESSION_ITEMS: ConcessionItem[] = [
+  {
+    id: 'combo-popcorn',
+    name: 'Combo bắp nước',
+    description: '1 bắp lớn + 2 nước ngọt',
+    price: 89000,
+  },
+  {
+    id: 'family-combo',
+    name: 'Family combo',
+    description: '2 bắp vừa + 4 nước ngọt',
+    price: 159000,
+  },
+  {
+    id: 'snack-box',
+    name: 'Snack box',
+    description: 'Bắp nhỏ + nachos + nước',
+    price: 119000,
+  },
+];
+
 interface HoldTimerProps {
   description: string;
   label: string;
@@ -63,6 +91,12 @@ function getSeatClassName(seat: MovieSeat, selected: boolean): string {
   return 'seat-button seat-button--available';
 }
 
+function getPromoDiscount(code: string, subtotal: number): number {
+  if (code === 'DEMO10') return Math.min(Math.round(subtotal * 0.1), 100000);
+  if (code === 'STUDENT50' && subtotal >= 150000) return 50000;
+  return 0;
+}
+
 function getMovieBookingSteps(eventId: string, cinemaId?: string) {
   return [
     { id: 'movie', label: 'Chọn phim', to: ROUTES.EVENTS },
@@ -96,6 +130,10 @@ export const CheckoutPage: React.FC = () => {
   const [selectedSeatIds, setSelectedSeatIds] = useState<string[]>([]);
   const [selectedTicketTypeId, setSelectedTicketTypeId] = useState(initialTicketTypeId ?? '');
   const [quantity, setQuantity] = useState(1);
+  const [selectedConcessionIds, setSelectedConcessionIds] = useState<string[]>([]);
+  const [promoDraft, setPromoDraft] = useState('');
+  const [appliedPromoCode, setAppliedPromoCode] = useState('');
+  const [promoError, setPromoError] = useState<string | null>(null);
 
   const movieSchedules = useMemo(() => event?.movieSchedules ?? [], [event?.movieSchedules]);
   const isMovieFlow = event?.category === 'Phim' && movieSchedules.length > 0;
@@ -140,9 +178,17 @@ export const CheckoutPage: React.FC = () => {
   );
   const movieSeatSelectionLimit = selectedShowtime ? getAvailableSeatCount(selectedShowtime) : 0;
 
-  const totalPrice = isMovieFlow
+  const ticketSubtotal = isMovieFlow
     ? selectedSeats.reduce((sum, seat) => sum + getSeatPrice(selectedTicketType, seat), 0)
     : (selectedTicketType?.price ?? 0) * quantity;
+  const selectedConcessions = useMemo(
+    () => CONCESSION_ITEMS.filter((item) => selectedConcessionIds.includes(item.id)),
+    [selectedConcessionIds],
+  );
+  const concessionTotal = selectedConcessions.reduce((sum, item) => sum + item.price, 0);
+  const grossSubtotal = ticketSubtotal + concessionTotal;
+  const promoDiscount = getPromoDiscount(appliedPromoCode, grossSubtotal);
+  const totalPrice = Math.max(0, grossSubtotal - promoDiscount);
   const hasBookingSession = Boolean(booking.session);
   const holdExpired = hasBookingSession && countdown.isExpired;
   const hasActiveHold = hasBookingSession && !holdExpired;
@@ -218,6 +264,38 @@ export const CheckoutPage: React.FC = () => {
     booking.clearSession();
     setSelectedSeatIds([]);
     setQuantity(1);
+    setSelectedConcessionIds([]);
+    setPromoDraft('');
+    setAppliedPromoCode('');
+    setPromoError(null);
+  };
+
+  const handleConcessionToggle = (itemId: string) => {
+    setSelectedConcessionIds((current) =>
+      current.includes(itemId) ? current.filter((id) => id !== itemId) : [...current, itemId],
+    );
+  };
+
+  const handleApplyPromo = (event: React.FormEvent) => {
+    event.preventDefault();
+    const code = promoDraft.trim().toUpperCase();
+
+    if (!code) {
+      setAppliedPromoCode('');
+      setPromoError(null);
+      return;
+    }
+
+    const discount = getPromoDiscount(code, grossSubtotal);
+    if (!discount) {
+      setAppliedPromoCode('');
+      setPromoError('Mã demo hợp lệ: DEMO10 hoặc STUDENT50 cho đơn từ 150.000đ.');
+      return;
+    }
+
+    setPromoDraft(code);
+    setAppliedPromoCode(code);
+    setPromoError(null);
   };
 
   const handleCancelBooking = async () => {
@@ -274,7 +352,10 @@ export const CheckoutPage: React.FC = () => {
   const handlePayment = async () => {
     if (!booking.session || countdown.isExpired) return;
 
-    const result = await payment.processPayment(booking.session);
+    const result = await payment.processPayment({
+      ...booking.session,
+      totalPrice,
+    });
     if (!result) return;
 
     if (result.status === 'success') {
@@ -284,6 +365,94 @@ export const CheckoutPage: React.FC = () => {
 
     navigate(routePaths.paymentFailed(result.sessionId, result.reason));
   };
+
+  const renderCheckoutAddons = () => (
+    <>
+      <div className="checkout-concessions">
+        <div className="checkout-concessions__header">
+          <strong>Combo bắp nước</strong>
+          <span>Tùy chọn thêm cho phần demo thanh toán.</span>
+        </div>
+        <div className="checkout-concessions__grid">
+          {CONCESSION_ITEMS.map((item) => {
+            const selected = selectedConcessionIds.includes(item.id);
+
+            return (
+              <button
+                type="button"
+                key={item.id}
+                className={selected ? 'checkout-concession checkout-concession--active' : 'checkout-concession'}
+                onClick={() => handleConcessionToggle(item.id)}
+                aria-pressed={selected}
+              >
+                <span>
+                  <strong>{item.name}</strong>
+                  <small>{item.description}</small>
+                </span>
+                <em>{formatCurrency(item.price)}</em>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <form className="checkout-promo" onSubmit={handleApplyPromo}>
+        <label htmlFor="checkout-promo-code">
+          <span>Mã giảm giá</span>
+          <input
+            id="checkout-promo-code"
+            value={promoDraft}
+            onChange={(event) => {
+              setPromoDraft(event.target.value);
+              setPromoError(null);
+            }}
+            placeholder="DEMO10 hoặc STUDENT50"
+            autoComplete="off"
+          />
+        </label>
+        <button type="submit">Áp dụng</button>
+        {appliedPromoCode ? (
+          <button
+            type="button"
+            onClick={() => {
+              setAppliedPromoCode('');
+              setPromoDraft('');
+              setPromoError(null);
+            }}
+          >
+            Gỡ mã
+          </button>
+        ) : null}
+        {promoError ? <p className="checkout-promo__error">{promoError}</p> : null}
+        {appliedPromoCode ? <p className="checkout-promo__success">Đã áp dụng {appliedPromoCode}.</p> : null}
+      </form>
+    </>
+  );
+
+  const renderPriceBreakdown = () => (
+    <>
+      <div>
+        <dt>Tiền vé</dt>
+        <dd>{ticketSubtotal === 0 ? 'Miễn phí' : formatCurrency(ticketSubtotal)}</dd>
+      </div>
+      {concessionTotal > 0 ? (
+        <div>
+          <dt>Combo</dt>
+          <dd>{formatCurrency(concessionTotal)}</dd>
+        </div>
+      ) : null}
+      {promoDiscount > 0 ? (
+        <div>
+          <dt>Giảm giá</dt>
+          <dd>-{formatCurrency(promoDiscount)}</dd>
+        </div>
+      ) : null}
+      <div className="checkout-summary__total">
+        <dt>Thanh toán</dt>
+        <dd>{totalPrice === 0 ? 'Miễn phí' : formatCurrency(totalPrice)}</dd>
+      </div>
+    </>
+  );
 
   if (!eventId) {
     return (
@@ -407,6 +576,8 @@ export const CheckoutPage: React.FC = () => {
               value={holdTimerValue}
             />
 
+            {renderCheckoutAddons()}
+
             <dl className="checkout-summary__rows">
               <div>
                 <dt>Concert</dt>
@@ -420,10 +591,7 @@ export const CheckoutPage: React.FC = () => {
                 <dt>Số lượng</dt>
                 <dd>{quantity}</dd>
               </div>
-              <div>
-                <dt>Tạm tính</dt>
-                <dd>{totalPrice === 0 ? 'Miễn phí' : formatCurrency(totalPrice)}</dd>
-              </div>
+              {renderPriceBreakdown()}
             </dl>
 
             {booking.session ? (
@@ -635,6 +803,8 @@ export const CheckoutPage: React.FC = () => {
             value={holdTimerValue}
           />
 
+          {renderCheckoutAddons()}
+
           <dl className="checkout-summary__rows">
             <div>
               <dt>Phim</dt>
@@ -660,10 +830,7 @@ export const CheckoutPage: React.FC = () => {
               <dt>Giá vé</dt>
               <dd>{selectedTicketType ? getPriceLabel(selectedTicketType) : 'Chưa chọn'}</dd>
             </div>
-            <div>
-              <dt>Tạm tính</dt>
-              <dd>{totalPrice === 0 ? 'Miễn phí' : formatCurrency(totalPrice)}</dd>
-            </div>
+            {renderPriceBreakdown()}
           </dl>
 
           {booking.error ? <p className="checkout-page__error">{booking.error}</p> : null}

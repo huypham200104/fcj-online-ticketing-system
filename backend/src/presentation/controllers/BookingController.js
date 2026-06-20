@@ -30,24 +30,55 @@ export class BookingController {
   async checkout(req, res, next) {
     try {
       const { bookingSessionId, paymentMethod, totalAmount } = req.body;
+      const idempotencyKey = req.get('Idempotency-Key') || `checkout:${bookingSessionId}`;
 
-      // 1. Chặn phiên giữ ghế đã hết hạn trước khi gọi cổng thanh toán.
-      await this.confirmOrderUseCase.ensureSessionCanCheckout(bookingSessionId);
-
-      // 2. Giả lập gọi cổng thanh toán
-      await this.processPaymentUseCase.execute({ 
-        orderId: bookingSessionId, 
-        paymentMethod 
+      // 1. Retry cùng idempotency key/session phải trả lại đơn cũ, không gọi payment lần nữa.
+      const reusableCheckout = await this.confirmOrderUseCase.findReusableCheckoutResult({
+        bookingSessionId,
+        idempotencyKey
       });
+      if (reusableCheckout) {
+        res.json({
+          success: true,
+          data: {
+            ...reusableCheckout,
+            emailDelivery: { status: 'skipped', reason: 'idempotent_replay' }
+          }
+        });
+        return;
+      }
 
-      // 3. Thanh toán thành công, tiến hành chốt đơn
+      // 2. Chặn phiên giữ ghế đã hết hạn trước khi gọi cổng thanh toán.
+      const session = await this.confirmOrderUseCase.ensureSessionCanCheckout(bookingSessionId);
+
+      // 3. Giả lập gọi cổng thanh toán. Nếu fail, nhả ghế ngay thay vì chờ TTL.
+      try {
+        await this.processPaymentUseCase.execute({
+          orderId: bookingSessionId,
+          paymentMethod
+        });
+      } catch (paymentError) {
+        if (this.confirmOrderUseCase.bookingRepository.fail) {
+          await this.confirmOrderUseCase.bookingRepository.fail(session.id);
+        } else {
+          session.status = 'failed';
+          await this.confirmOrderUseCase.bookingRepository.save(session);
+        }
+        await this.confirmOrderUseCase.seatRepository.releaseSeatsForSession(session.id);
+        throw paymentError;
+      }
+
+      // 4. Thanh toán thành công, tiến hành chốt đơn
       const checkoutResult = await this.confirmOrderUseCase.execute({
         bookingSessionId,
         totalAmount,
-        paymentMethod
+        paymentMethod,
+        idempotencyKey
       });
 
-      const emailDelivery = await this.sendTicketEmailSafely(checkoutResult);
+      const emailDelivery = checkoutResult.isNewOrder
+        ? await this.sendTicketEmailSafely(checkoutResult)
+        : { status: 'skipped', reason: 'idempotent_replay' };
 
       res.json({
         success: true,

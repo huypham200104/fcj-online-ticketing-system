@@ -17,6 +17,23 @@ export class MockOrderRepository {
     return Array.from(ordersDB.values()).map(order => new Order(order));
   }
 
+  async findByUserId(userId) {
+    return Array.from(ordersDB.values())
+      .filter(order => order.userId === userId)
+      .map(order => new Order(order));
+  }
+
+  async findByBookingSessionId(bookingSessionId) {
+    const data = Array.from(ordersDB.values()).find(order => order.bookingSessionId === bookingSessionId);
+    return data ? new Order(data) : null;
+  }
+
+  async findByIdempotencyKey(idempotencyKey) {
+    if (!idempotencyKey) return null;
+    const data = Array.from(ordersDB.values()).find(order => order.idempotencyKey === idempotencyKey);
+    return data ? new Order(data) : null;
+  }
+
   async update(id, updates) {
     const order = await this.findById(id);
     if (!order) return null;

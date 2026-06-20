@@ -159,6 +159,20 @@
   gap: 8px;
 }
 
+.account-menu__notice {
+  min-height: 86px;
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-subtle);
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 850;
+  line-height: 1.4;
+}
+
 .account-menu__card {
   display: grid;
   gap: 4px;
@@ -274,6 +288,7 @@
 @media (max-width: 560px) {
   .account-menu {
     min-width: 0;
+    position: static;
   }
 
   .account-menu__copy {
@@ -285,10 +300,20 @@
   }
 
   .account-menu__panel {
-    right: -2px;
+    position: fixed;
+    top: 76px;
+    right: 12px;
+    left: 12px;
+    width: auto;
+    max-height: calc(100dvh - 92px);
+    overflow-y: auto;
   }
 
   .account-menu__cards {
     grid-template-columns: 1fr;
+  }
+
+  .account-menu__notice {
+    min-height: auto;
   }
 }

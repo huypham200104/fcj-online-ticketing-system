@@ -8,9 +8,6 @@ dotenv.config();
 import { errorHandler } from './presentation/middlewares/errorHandler.js';
 import { createRateLimiter } from './presentation/middlewares/rateLimitMiddleware.js';
 
-// Import old routes (to keep tickets working temporarily)
-import ticketsRouter from './routes/tickets.js';
-
 // --- DEPENDENCY INJECTION (DI) SETUP ---
 // 1. Infrastructure
 import { MockEventRepository } from './infrastructure/database/mock/MockEventRepository.js';
@@ -22,6 +19,7 @@ import { MockBookingRepository } from './infrastructure/database/mock/MockBookin
 import { MockOrderRepository } from './infrastructure/database/mock/MockOrderRepository.js';
 import { MockTicketRepository } from './infrastructure/database/mock/MockTicketRepository.js';
 import { GmailTicketEmailService } from './infrastructure/email/GmailTicketEmailService.js';
+import { MockAuditLogRepository } from './infrastructure/audit/MockAuditLogRepository.js';
 
 // 2. Application Use Cases
 import { GetEventsUseCase } from './application/use-cases/GetEventsUseCase.js';
@@ -51,6 +49,8 @@ import { ShowTimeController } from './presentation/controllers/ShowTimeControlle
 import { createShowTimeRouter } from './presentation/routes/showTimeRoutes.js';
 import { BookingController } from './presentation/controllers/BookingController.js';
 import { createBookingRouter } from './presentation/routes/bookingRoutes.js';
+import { OrderController } from './presentation/controllers/OrderController.js';
+import { createOrderRouter } from './presentation/routes/orderRoutes.js';
 import { TicketController } from './presentation/controllers/TicketController.js';
 import { createTicketRouter } from './presentation/routes/ticketRoutes.js';
 import { AdminController } from './presentation/controllers/AdminController.js';
@@ -72,10 +72,11 @@ const bookingRepository = new MockBookingRepository();
 const orderRepository = new MockOrderRepository();
 const ticketRepository = new MockTicketRepository();
 const ticketEmailService = new GmailTicketEmailService();
+const auditLogRepository = new MockAuditLogRepository();
 
 // ShowTimes
 const getEventShowTimesUseCase = new GetEventShowTimesUseCase(showTimeRepository, venueRepository);
-const getShowTimeSeatsUseCase = new GetShowTimeSeatsUseCase(showTimeRepository, seatRepository);
+const getShowTimeSeatsUseCase = new GetShowTimeSeatsUseCase(showTimeRepository, seatRepository, bookingRepository);
 
 const showTimeController = new ShowTimeController(
   getEventShowTimesUseCase,
@@ -105,16 +106,17 @@ const getUserProfileUseCase = new GetUserProfileUseCase(userRepository);
 const userController = new UserController(
   registerUserUseCase,
   loginUserUseCase,
-  getUserProfileUseCase
+  getUserProfileUseCase,
+  ticketEmailService
 );
 
 const userRoutes = createUserRouter(userController);
 
 // Booking
 const lockSeatsUseCase = new LockSeatsUseCase(bookingRepository, seatRepository);
-const cancelBookingSessionUseCase = new CancelBookingSessionUseCase(bookingRepository);
+const cancelBookingSessionUseCase = new CancelBookingSessionUseCase(bookingRepository, seatRepository);
 const processPaymentUseCase = new ProcessPaymentUseCase();
-const confirmOrderUseCase = new ConfirmOrderUseCase(bookingRepository, orderRepository, ticketRepository);
+const confirmOrderUseCase = new ConfirmOrderUseCase(bookingRepository, orderRepository, ticketRepository, seatRepository);
 const sendTicketEmailUseCase = new SendTicketEmailUseCase({
   userRepository,
   showTimeRepository,
@@ -134,6 +136,18 @@ const bookingController = new BookingController(
 
 const bookingRoutes = createBookingRouter(bookingController);
 
+// Orders
+const orderController = new OrderController({
+  orderRepository,
+  ticketRepository,
+  bookingRepository,
+  showTimeRepository,
+  eventRepository,
+  venueRepository,
+  seatRepository
+});
+const orderRoutes = createOrderRouter(orderController);
+
 // Tickets
 const getMyTicketsUseCase = new GetMyTicketsUseCase(ticketRepository);
 const generateTicketQRUseCase = new GenerateTicketQRUseCase(ticketRepository);
@@ -143,7 +157,8 @@ const checkInTicketUseCase = new CheckInTicketUseCase(
   eventRepository,
   venueRepository,
   seatRepository,
-  userRepository
+  userRepository,
+  auditLogRepository
 );
 const getCheckInHistoryUseCase = new GetCheckInHistoryUseCase(ticketRepository);
 
@@ -165,7 +180,8 @@ const adminController = new AdminController({
   orderRepository,
   ticketRepository,
   bookingRepository,
-  systemStats
+  systemStats,
+  auditLogRepository
 });
 const adminRoutes = createAdminRouter(adminController);
 // ----------------------------------------
@@ -243,6 +259,7 @@ app.use('/api/showtimes', showTimeRoutes);
 app.use('/api/auth', userRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/bookings', bookingRateLimit, bookingRoutes);
+app.use('/api/orders', orderRoutes);
 app.use('/api/tickets/checkin', staffRateLimit);
 app.use('/api/tickets', newTicketRoutes); // Updated to Clean Arch
 app.use('/api/admin', adminRateLimit, adminRoutes);

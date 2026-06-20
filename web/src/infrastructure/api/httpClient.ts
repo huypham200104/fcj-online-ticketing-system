@@ -26,7 +26,7 @@ export class ApiClientError extends Error {
   }
 }
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001/api').replace(/\/$/, '');
+export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3002/api').replace(/\/$/, '');
 
 export async function apiRequest<T>(path: string, options: ApiRequestOptions = {}): Promise<T> {
   const payload = await apiRequestEnvelope<T>(path, options);
@@ -39,8 +39,9 @@ export async function apiRequestEnvelope<T>(
 ): Promise<BackendEnvelope<T>> {
   const headers = new Headers(options.headers);
   const hasBody = options.body !== undefined;
+  const isFormData = hasBody && options.body instanceof FormData;
 
-  if (hasBody && !headers.has('Content-Type')) {
+  if (hasBody && !isFormData && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
   }
 
@@ -53,7 +54,7 @@ export async function apiRequestEnvelope<T>(
     ...options,
     credentials: options.credentials ?? 'include',
     headers,
-    body: hasBody ? JSON.stringify(options.body) : undefined,
+    body: (hasBody ? (isFormData ? options.body : JSON.stringify(options.body)) : undefined) as BodyInit | undefined,
   });
 
   const payload = (await response.json().catch(() => null)) as BackendEnvelope<T> | null;

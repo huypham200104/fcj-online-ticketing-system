@@ -25,6 +25,16 @@ export class MockTicketRepository {
     return userTickets;
   }
 
+  async findByOrderId(orderId) {
+    const orderTickets = [];
+    for (const ticket of ticketsDB.values()) {
+      if (ticket.orderId === orderId) {
+        orderTickets.push(new Ticket(ticket));
+      }
+    }
+    return orderTickets;
+  }
+
   async findAll() {
     return Array.from(ticketsDB.values()).map(ticket => new Ticket(ticket));
   }

@@ -27,11 +27,26 @@ function getPageNumbers(current: number, total: number): number[] {
   return Array.from({ length: end - start + 1 }, (_, index) => start + index);
 }
 
+function getFormatLabel(value: string): string {
+  const labels: Record<string, string> = {
+    standard: 'Standard',
+    '2d': '2D / Standard',
+    imax: 'IMAX',
+    premium: 'Premium / Recliner',
+    fan: 'Fan Zone',
+    vip: 'VIP / Fan Zone',
+  };
+  return labels[value] ?? value;
+}
+
 export const EventCatalogPage: React.FC<EventCatalogPageProps> = ({ category }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const page = Math.max(Number(searchParams.get('page') ?? '1') || 1, 1);
   const q = searchParams.get('q')?.trim() ?? '';
   const city = searchParams.get('city')?.trim() ?? '';
+  const date = searchParams.get('date')?.trim() ?? '';
+  const format = searchParams.get('format')?.trim() ?? '';
+  const maxPrice = searchParams.get('maxPrice')?.trim() ?? '';
   const [result, setResult] = useState<PaginatedResult<TicketEvent> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,13 +57,13 @@ export const EventCatalogPage: React.FC<EventCatalogPageProps> = ({ category }) 
     setError(null);
 
     try {
-      setResult(await eventService.listEventsPage(category, page, PAGE_SIZE, { q, city }));
+      setResult(await eventService.listEventsPage(category, page, PAGE_SIZE, { q, city, date, format, maxPrice }));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Không thể tải danh sách sự kiện');
     } finally {
       setLoading(false);
     }
-  }, [category, city, page, q]);
+  }, [category, city, date, format, maxPrice, page, q]);
 
   useEffect(() => {
     const loadTimer = window.setTimeout(() => {
@@ -71,6 +86,19 @@ export const EventCatalogPage: React.FC<EventCatalogPageProps> = ({ category }) 
 
   const clearFilters = () => {
     setSearchParams({ page: '1' });
+  };
+
+  const handleFilterSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const params = new URLSearchParams({ page: '1' });
+
+    ['q', 'city', 'date', 'format', 'maxPrice'].forEach((key) => {
+      const trimmed = String(formData.get(key) ?? '').trim();
+      if (trimmed) params.set(key, trimmed);
+    });
+
+    setSearchParams(params);
   };
 
   if (loading) {
@@ -117,10 +145,79 @@ export const EventCatalogPage: React.FC<EventCatalogPageProps> = ({ category }) 
         </div>
       </section>
 
-      {(q || city) ? (
+      <form className="catalog-filter-panel" onSubmit={handleFilterSubmit} key={`${q}|${city}|${date}|${format}|${maxPrice}`}>
+        <label>
+          <span>Từ khóa</span>
+          <input
+            name="q"
+            type="search"
+            defaultValue={q}
+            placeholder={isMovie ? 'Tên phim, rạp...' : 'Tên concert, địa điểm...'}
+          />
+        </label>
+        <label>
+          <span>Thành phố</span>
+          <select name="city" defaultValue={city}>
+            <option value="">Tất cả</option>
+            <option value="TP. HCM">TP. Hồ Chí Minh</option>
+            <option value="Hà Nội">Hà Nội</option>
+          </select>
+        </label>
+        <label>
+          <span>Ngày diễn ra</span>
+          <input name="date" type="date" defaultValue={date} />
+        </label>
+        <label>
+          <span>{isMovie ? 'Định dạng' : 'Loại vé'}</span>
+          <select name="format" defaultValue={format}>
+            <option value="">Tất cả</option>
+            {isMovie ? (
+              <>
+                <option value="2d">2D / Standard</option>
+                <option value="imax">IMAX</option>
+                <option value="premium">Premium / Recliner</option>
+              </>
+            ) : (
+              <>
+                <option value="standard">Standard</option>
+                <option value="fan">Fan Zone</option>
+                <option value="vip">VIP</option>
+              </>
+            )}
+          </select>
+        </label>
+        <label>
+          <span>Giá tối đa</span>
+          <select name="maxPrice" defaultValue={maxPrice}>
+            <option value="">Tất cả</option>
+            {isMovie ? (
+              <>
+                <option value="120000">120.000đ</option>
+                <option value="180000">180.000đ</option>
+                <option value="250000">250.000đ</option>
+              </>
+            ) : (
+              <>
+                <option value="700000">700.000đ</option>
+                <option value="1200000">1.200.000đ</option>
+                <option value="2000000">2.000.000đ</option>
+              </>
+            )}
+          </select>
+        </label>
+        <div className="catalog-filter-panel__actions">
+          <button type="submit">Lọc</button>
+          <button type="button" onClick={clearFilters}>Xóa</button>
+        </div>
+      </form>
+
+      {(q || city || date || format || maxPrice) ? (
         <div className="catalog-page__filters">
           {q ? <span>Từ khóa: {q}</span> : null}
           {city ? <span>Thành phố: {city}</span> : null}
+          {date ? <span>Ngày: {date}</span> : null}
+          {format ? <span>{isMovie ? 'Định dạng' : 'Loại vé'}: {getFormatLabel(format)}</span> : null}
+          {maxPrice ? <span>Giá tối đa: {formatCurrency(Number(maxPrice))}</span> : null}
           <button type="button" onClick={clearFilters}>Xóa lọc</button>
         </div>
       ) : null}

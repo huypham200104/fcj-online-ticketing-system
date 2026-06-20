@@ -4,7 +4,7 @@ export class BookingSession {
     this.userId = userId;
     this.showTimeId = showTimeId;
     this.seatIds = seatIds; // array of seat IDs
-    this.status = status; // 'pending', 'confirmed', 'expired', 'cancelled'
+    this.status = status; // 'pending', 'confirmed', 'expired', 'cancelled', 'failed'
     this.expiresAt = expiresAt; // timestamp
   }
 
